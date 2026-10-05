@@ -1,18 +1,25 @@
-# zálohy, přístupy a lokální prostředí neverzujeme
+# zálohy a lokální prostředí neverzujeme
 backup-*/
-mndgroup.txt
 dev/wp/
 dev/db/
+dev/_incoming/
+dev/_disabled-plugins/
+dev/wp-content-uploads/
 dev/.local-admin
 dev/tests/node_modules/
 dev/tests/out/
 _to_delete/
-.DS_Store
+obrazky/
 *.log
 *.sql
 *.sql.gz
 *.zip
-# interní dokumenty (revize, wishlist, bezpečnostní nálezy) – do veřejného repa nepatří
+.DS_Store
+__pycache__/
+# přístupové údaje
+ctime.txt
+mndgroup.txt
+# interní dokumenty a vývojové pomůcky – do veřejného repa nepatří
 # (pozor: komentář v .gitignore musí být na samostatném řádku, za vzorem nefunguje)
 _docs/
 docs/

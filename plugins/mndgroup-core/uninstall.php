@@ -1,6 +1,7 @@
 <?php
 /**
- * Odinstalace pluginu: smazat záznam přihlášení, blokace, cache vydání a nastavení uživatelů.
+ * Odinstalace pluginu: smazat nastavení, záznam přihlášení, blokace, cache a metadata pluginu.
+ * Karanténa (složka mndgroup-karantena a tabulky mndq_*) zůstává – smazat ji jde v Údržbě webu.
  *
  * @package MNDGroupCore
  */
@@ -13,6 +14,9 @@ delete_option( 'mnd_core_settings' );
 delete_option( 'mnd_core_login_log' );
 delete_option( 'mnd_core_last_maintenance' );
 delete_transient( 'mnd_core_health_db' );
+delete_transient( 'mnd_core_health' );
+delete_metadata( 'user', 0, 'mnd_core_last_login', '', true );
+delete_metadata( 'post', 0, '_mnd_core_webp_fail', '', true );
 delete_site_transient( 'mnd_core_release' );
 delete_metadata( 'user', 0, 'mnd_core_full_menu', '', true ); // přepínač menu z verze 2.1
 

@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</div>
 
-		<p class="mnd-footer__info"><?php mnd_copyright(); ?></p>
+		<p class="mnd-footer__info"><?php mnd_copyright(); ?><?php do_action( 'mnd_footer_info' ); // např. „Nastavení cookies“ ?></p>
 	</div>
 
 	<?php if ( get_theme_mod( 'mnd_show_kkcg', true ) ) : ?>

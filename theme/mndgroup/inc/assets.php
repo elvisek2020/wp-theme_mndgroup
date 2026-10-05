@@ -77,24 +77,3 @@ function mnd_head_meta() {
 	}
 }
 add_action( 'wp_head', 'mnd_head_meta', 2 );
-
-/**
- * Google Analytics 4 – jen pokud je v Přizpůsobení vyplněno ID měření.
- * Náhrada pluginu MonsterInsights (vypisoval totéž, jen s mnohem větší režií).
- */
-function mnd_google_analytics() {
-	$id = get_theme_mod( 'mnd_ga_id', '' );
-	if ( ! $id || ! preg_match( '/^G-[A-Z0-9]+$/', $id ) || is_user_logged_in() ) {
-		return;
-	}
-	?>
-	<script async src="<?php echo esc_url( 'https://www.googletagmanager.com/gtag/js?id=' . $id ); ?>"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag(){dataLayer.push(arguments);}
-		gtag('js', new Date());
-		gtag('config', <?php echo wp_json_encode( $id ); ?>);
-	</script>
-	<?php
-}
-add_action( 'wp_head', 'mnd_google_analytics', 20 );

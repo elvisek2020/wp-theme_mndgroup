@@ -90,7 +90,7 @@ function mnd_customize_register( $wp_customize ) {
 		'mnd_ga_id',
 		array(
 			'label'       => __( 'Google Analytics 4 – measurement ID', 'mndgroup' ),
-			'description' => __( 'For example G-XXXXXXXXXX. Leave empty if analytics is handled by a plugin, otherwise visits are counted twice.', 'mndgroup' ),
+			'description' => __( 'For example G-XXXXXXXXXX. Visitors first see a cookie bar, analytics starts only after they accept. Leave empty to disable analytics.', 'mndgroup' ),
 			'section'     => 'mndgroup',
 			'type'        => 'text',
 		)

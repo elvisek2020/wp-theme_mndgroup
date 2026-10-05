@@ -43,9 +43,20 @@ $WP theme activate mndgroup
 $WP plugin activate mndgroup-core
 
 echo "▶ Vypínám ManageWP a pluginy, které nahrazuje šablona nebo MND Group Core…"
-$WP plugin deactivate worker lightbox mce-table-buttons server-ip-memory-usage simple-custom-post-order \
-	simple-login-log google-analytics-for-wordpress codepress-admin-columns backupwordpress \
-	all-in-one-wp-security-and-firewall admin-menu-editor || true
+OBSOLETE="lightbox mce-table-buttons server-ip-memory-usage simple-custom-post-order simple-login-log \
+	google-analytics-for-wordpress codepress-admin-columns backupwordpress all-in-one-wp-security-and-firewall \
+	admin-menu-editor w3-total-cache"
+$WP plugin deactivate worker $OBSOLETE || true
+# Nahrazené pluginy mimo web do _disabled-plugins/ – pro porovnání chování stačí složku vrátit.
+mkdir -p _disabled-plugins _incoming
+for p in $OBSOLETE; do
+	[ -d "wp/wp-content/plugins/$p" ] || continue
+	if [ -e "_disabled-plugins/$p" ]; then
+		rm -rf "wp/wp-content/plugins/$p"
+	else
+		mv "wp/wp-content/plugins/$p" _disabled-plugins/
+	fi
+done
 curl -s -o /dev/null http://localhost:8321/   # dokončí přepnutí šablony (menu v Polylangu, widgety)
 $WP cache flush || true
 

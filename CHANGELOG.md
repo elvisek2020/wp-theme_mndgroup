@@ -2,6 +2,31 @@
 
 ## Nevydáno
 
+## 2.3.0 — 2026-10-05
+### Šablona
+- **SEO**: meta description ze stručného výpisu stránky (Stránky → Upravit → Stručný výpis, jinak začátek textu), Open Graph s jazykovými verzemi z Polylangu, karta pro X a strukturovaná data organizace a webu; obrázek pro sdílení s logem MND. S aktivním SEO pluginem (Yoast, Rank Math…) se nevypisuje nic, aby značky nebyly dvakrát
+- **Google Analytics 4 s cookie lištou**: bez vyplněného ID se nenačte nic. S ID uvidí návštěvník lištu Přijmout / Odmítnout a Google se načte až po souhlasu (Consent Mode v2, výchozí stav „odmítnuto“). Volba platí 12 měsíců, změnit jde odkazem „Nastavení cookies“ v patičce, při odvolání se smažou cookies `_ga`. Přihlášení uživatelé se neměří
+- ID měření se při prvním otevření administrace samo převezme z MonsterInsights – po jeho vypnutí se měří dál bez dalšího nastavování; dokud je MonsterInsights aktivní, šablona GA nevkládá (neměřilo by se dvakrát)
+
+### MND Group Core
+- **Obrázky jako WebP**: nahrané JPG a PNG se uloží rovnou jako WebP (fotky otočené podle EXIF), zmenšeniny také ve WebP – i při nahrání přes REST API a WP-CLI
+- **Údržba webu → Obrázky na WebP**: jednorázový převod starších obrázků včetně všech velikostí a odkazů v obsahu; staré adresy přesměrují (301), originály jdou do karantény
+- **Údržba webu → Databáze**: velikost tabulek, autoload a největší volby, optimalizace tabulek; **Média a odkazy**: největší soubory, nepoužité obrázky, rozbité interní odkazy
+- **Úklid po odebraných pluginech**: najde tabulky, volby a složky po AIOS, Simple Login Log, BackUpWordPress, MonsterInsights, Huge IT Lightbox, Admin Menu Editor, Admin Columns, Simple Custom Post Order, W3 Total Cache a staré šabloně. Jedním tlačítkem je přesune do karantény (volby se zálohují do JSON, tabulky se přejmenují), karanténa se maže samostatně
+- **Sitemap s datem poslední změny** a **/llms.txt** – stručný přehled webu a stránek obou jazyků pro AI vyhledávače; obojí jde vypnout v Nastavení
+- **Zdraví webu** přehledněji: verze a dostupné aktualizace, velikost databáze, autoload a uploads (přepočet tlačítkem Obnovit), koncepty, neúspěšná přihlášení, blokace, poslední přihlášení a poslední údržba
+- **Log přihlášení** má vlastní stránku Nástroje → Log přihlášení, ukládá i prohlížeč; v přehledu uživatelů sloupec Poslední přihlášení
+- Adresy `?author=…` a archivy autorů přesměrují na úvodní stránku (dřív 404); v patičce administrace i IP serveru
+- Nastavení: nové sekce SEO a Média
+
+### Nástroje
+- `tools/wp.py` – REST klient pro web (stránky, slidy, média, koncepty; publikuje vždy člověk), přístup v `ctime.txt`
+- `tools/img.py` – příprava obrázků do WebP (výchozí rozměr banneru 1920 × 484)
+
+### Vydání
+- Struktura repozitáře podle skillu: `.gitignore` podle vzoru, `tools/`, v `dev/` složky `_disabled-plugins/` (nahrazené pluginy) a `_incoming/`, `theme/mndgroup/.gitkeep` (do ZIPu se nebalí)
+- Kontrola stránek (`dev/tests`) navíc ověřuje SEO značky, `/llms.txt` a cookie lištu (bez souhlasu žádný požadavek na Google)
+
 ## 2.2.0 — 2026-10-05
 ### MND Group Core
 - **Nastavení → MND Group Core**: každou funkci jde zapnout a vypnout – omezení pokusů o přihlášení (počet pokusů, délka blokace), log přihlášení, XML-RPC, editor souborů, skrytí uživatelských jmen a verze WordPressu, bezpečnostní hlavičky, HSTS, sitemap bez uživatelů, komentáře, info o serveru v patičce, widget Zdraví webu

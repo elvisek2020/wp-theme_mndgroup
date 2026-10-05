@@ -6,7 +6,8 @@
  *   CHROME_PATH=/cesta npm test     jiný prohlížeč
  *
  * Kontroluje: stavové kódy, chyby v konzoli a JS, přetékání stránky do strany,
- * prezentaci bannerů, dlaždice s firmami, přepínač jazyků a bezpečnostní hlavičky.
+ * prezentaci bannerů, dlaždice s firmami, přepínač jazyků, bezpečnostní hlavičky,
+ * SEO značky, /llms.txt a cookie lištu (jen když je vyplněné ID GA4; Google se neosloví).
  * Snímky ukládá do out/. Při chybě skončí s kódem 1.
  */
 import { chromium } from 'playwright-core';
@@ -51,6 +52,9 @@ try {
 			isMobile: !!vp.isMobile,
 			hasTouch: !!vp.hasTouch,
 			reducedMotion: 'no-preference',
+		});
+		await context.addInitScript(() => {
+			try { localStorage.setItem('mndConsent', JSON.stringify({ v: 'denied', t: Date.now() })); } catch (e) {}
 		});
 
 		for (const pg of PAGES) {
@@ -123,6 +127,19 @@ try {
 					headers[h] ? ok(`hlavička ${h}`) : fail(`${label}: chybí hlavička ${h}`);
 				}
 				headers['x-pingback'] ? fail(`${label}: hlavička X-Pingback by neměla být`) : ok('bez X-Pingback');
+
+				const seo = await page.evaluate(() => ({
+					description: document.querySelectorAll('meta[name="description"]').length,
+					og: document.querySelectorAll('meta[property="og:title"]').length,
+					image: document.querySelector('meta[property="og:image"]')?.content || '',
+					ld: [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => { try { return JSON.parse(s.textContent)['@graph'].map((g) => g['@type']).join('+'); } catch (e) { return 'chyba'; } }),
+				}));
+				seo.description === 1 && seo.og === 1 ? ok('meta description a Open Graph (každé jednou)') : fail(`${label}: description ${seo.description}×, og:title ${seo.og}×`);
+				seo.ld.join() === 'Organization+WebSite' ? ok('JSON-LD Organization + WebSite') : fail(`${label}: JSON-LD ${seo.ld.join() || 'chybí'}`);
+				if (seo.image) {
+					const img = await page.request.get(seo.image, { failOnStatusCode: false });
+					img.status() === 200 ? ok('og:image se načte') : fail(`${label}: og:image vrací ${img.status()}`);
+				}
 			}
 
 			errors.length ? fail(`${label}: chyby v konzoli: ${errors.join(' | ')}`) : ok('bez chyb v konzoli');
@@ -145,11 +162,65 @@ try {
 	const users = await req.request.get(`${BASE}/wp-json/wp/v2/users`, { failOnStatusCode: false });
 	users.status() === 404 ? ok('REST seznam uživatelů skrytý (404)') : fail(`REST /wp/v2/users vrací ${users.status()}`);
 	const author = await req.request.get(`${BASE}/?author=1`, { failOnStatusCode: false, maxRedirects: 0 });
-	author.status() === 404 ? ok('?author=1 vrací 404') : fail(`?author=1 vrací ${author.status()}`);
+	const authorTo = (author.headers().location || '').replace(/\/$/, '');
+	author.status() === 301 && authorTo === BASE ? ok('?author=1 přesměruje na úvod') : fail(`?author=1 vrací ${author.status()} ${authorTo}`);
 	const sitemap = await req.request.get(`${BASE}/wp-sitemap.xml`, { failOnStatusCode: false });
 	const sitemapBody = await sitemap.text();
 	sitemapBody.includes('wp-sitemap-users') ? fail('sitemap obsahuje uživatele') : ok('sitemap bez uživatelů');
+	const llms = await req.request.get(`${BASE}/llms.txt`, { failOnStatusCode: false });
+	const llmsBody = await llms.text();
+	llms.status() === 200 && llmsBody.startsWith('# ') && llmsBody.includes('## ')
+		? ok('/llms.txt') : fail(`/llms.txt vrací ${llms.status()}`);
 	await req.close();
+
+	// Cookie lišta a GA4: bez souhlasu žádný požadavek na Google, rozhodnutí se pamatuje, jde změnit v patičce.
+	console.log('\ncookie lišta');
+	for (const vp of VIEWPORTS) {
+		const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: !!vp.isMobile, hasTouch: !!vp.hasTouch });
+		const google = [];
+		await context.route(/googletagmanager\.com|google-analytics\.com/, (route) => {
+			google.push(route.request().url());
+			route.fulfill({ status: 200, contentType: 'text/javascript', body: '' });
+		});
+		const page = await context.newPage();
+		const errors = [];
+		page.on('pageerror', (e) => errors.push(e.message));
+		try {
+			await page.goto(`${BASE}/`, { waitUntil: 'load' });
+			const bar = page.locator('#mnd-consent');
+			if (!(await bar.count())) {
+				ok(`${vp.name}: ID GA4 není vyplněné – lišta ani měření se nenačítají`);
+				continue;
+			}
+			await bar.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+			(await bar.isVisible()) ? ok(`${vp.name}: lišta se zobrazí`) : fail(`${vp.name}: lišta se nezobrazila`);
+			google.length ? fail(`${vp.name}: požadavek na Google před souhlasem`) : ok(`${vp.name}: bez souhlasu žádný požadavek na Google`);
+			const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+			overflow <= 0 ? ok(`${vp.name}: s lištou bez přetékání`) : fail(`${vp.name}: s lištou stránka přetéká o ${overflow} px`);
+			await page.screenshot({ path: new URL(`./out/${vp.name}-cookie-lista.png`, import.meta.url).pathname });
+
+			await page.locator('[data-mnd-consent="denied"]').click();
+			await page.reload({ waitUntil: 'load' });
+			!(await bar.isVisible()) && !google.length ? ok(`${vp.name}: odmítnutí se pamatuje, Google nic`) : fail(`${vp.name}: po odmítnutí lišta ${await bar.isVisible() ? 'zůstala' : 'zmizela'}, Google ${google.length}×`);
+
+			await page.locator('[data-mnd-consent-open]').click();
+			(await bar.isVisible()) ? ok(`${vp.name}: „Nastavení cookies“ lištu znovu otevře`) : fail(`${vp.name}: odkaz v patičce lištu neotevřel`);
+			await page.locator('[data-mnd-consent="granted"]').click();
+			await page.waitForTimeout(300);
+			const granted = await page.evaluate(() => (window.dataLayer || []).some((a) => a[0] === 'consent' && a[1] === 'update' && a[2]?.analytics_storage === 'granted'));
+			google.some((u) => u.includes('gtag/js')) && granted ? ok(`${vp.name}: po souhlasu consent update a gtag.js`) : fail(`${vp.name}: po souhlasu gtag.js ${google.length}×, update ${granted}`);
+
+			const before = google.length;
+			await page.reload({ waitUntil: 'load' });
+			await page.waitForTimeout(300);
+			!(await bar.isVisible()) && google.length > before ? ok(`${vp.name}: souhlas se pamatuje, měří se hned`) : fail(`${vp.name}: po souhlasu a obnovení lišta ${await bar.isVisible() ? 'zůstala' : 'skrytá'}, Google ${google.length - before}×`);
+			errors.length ? fail(`${vp.name}: chyby JS: ${errors.join(' | ')}`) : ok(`${vp.name}: bez chyb JS`);
+		} catch (e) {
+			fail(`cookie lišta ${vp.name}: ${e.message.split('\n')[0]}`);
+		} finally {
+			await context.close();
+		}
+	}
 } finally {
 	await browser.close();
 }

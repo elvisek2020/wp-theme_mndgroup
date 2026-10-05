@@ -5,13 +5,14 @@
  * Každá funkce jde zapnout a vypnout v Nastavení → MND Group Core (inc/settings.php).
  *
  * 1) Omezení pokusů o přihlášení (nahrazuje All-In-One Security)
- * 2) Log přihlášení (nahrazuje Simple Login Log)
+ * 2) Log přihlášení + poslední přihlášení (nahrazuje Simple Login Log)
  * 3) Info o serveru v patičce administrace (nahrazuje Server IP & Memory Usage)
  * 4) Komentáře vypnuté
  * 5) Automatické aktualizace (WordPress, pluginy a šablony – šablona a plugin MND vždy ručně)
- * 6) Hardening (XML-RPC, editor souborů, uživatelská jména, verze WordPressu)
- * 7) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
- * 8) Aktualizace pluginu z GitHub Releases
+ * 6) Obrázky jako WebP
+ * 7) Hardening (XML-RPC, editor souborů, uživatelská jména, verze WordPressu)
+ * 8) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php, inc/leftovers.php)
+ * 9) Aktualizace pluginu z GitHub Releases
  *
  * @package MNDGroupCore
  */
@@ -168,8 +169,9 @@ if ( mnd_core_on( 'login_protection' ) ) {
 }
 
 /* =========================================================================
- * 2) Log přihlášení (nahrazuje Simple Login Log)
- * Posledních 200 událostí (max. 90 dní): přihlášení, neúspěšné pokusy, blokace.
+ * 2) Log přihlášení (nahrazuje Simple Login Log) + poslední přihlášení
+ * Posledních 200 událostí (max. 90 dní): přihlášení, neúspěšné pokusy, blokace – v Nástroje →
+ * Log přihlášení. Čas posledního přihlášení v user meta a ve sloupci v přehledu uživatelů.
  * ====================================================================== */
 
 /**
@@ -192,6 +194,7 @@ function mnd_core_log_login( $type, $username, $ip, $duration = 0 ) {
 			'u' => mb_substr( sanitize_user( (string) $username, false ), 0, 60 ),
 			'i' => $ip,
 			'd' => (int) $duration,
+			'a' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ), 0, 160 ) : '',
 		)
 	);
 
@@ -219,18 +222,134 @@ function mnd_core_log_failed( $username ) {
 }
 
 /**
- * Úspěšné přihlášení do záznamu.
+ * Úspěšné přihlášení do záznamu a čas posledního přihlášení uživatele.
  *
- * @param string $user_login Uživatelské jméno.
+ * @param string  $user_login Uživatelské jméno.
+ * @param WP_User $user       Uživatel.
  */
-function mnd_core_log_success( $user_login ) {
+function mnd_core_log_success( $user_login, $user = null ) {
 	mnd_core_log_login( 'success', $user_login, mnd_core_client_ip() );
+	if ( $user instanceof WP_User ) {
+		update_user_meta( $user->ID, 'mnd_core_last_login', time() );
+	}
+}
+
+/**
+ * Sloupec „Poslední přihlášení“ v přehledu uživatelů.
+ *
+ * @param array $columns Sloupce.
+ * @return array
+ */
+function mnd_core_users_column( $columns ) {
+	$columns['mnd_core_last_login'] = __( 'Poslední přihlášení', 'mndgroup-core' );
+	return $columns;
+}
+
+/**
+ * Obsah sloupce.
+ *
+ * @param string $output  Výstup.
+ * @param string $column  Sloupec.
+ * @param int    $user_id ID uživatele.
+ * @return string
+ */
+function mnd_core_users_column_content( $output, $column, $user_id ) {
+	if ( 'mnd_core_last_login' !== $column ) {
+		return $output;
+	}
+	$time = (int) get_user_meta( $user_id, 'mnd_core_last_login', true );
+	return $time ? esc_html( wp_date( 'j. n. Y H:i', $time ) ) : '—';
+}
+
+/**
+ * Stránka Nástroje → Log přihlášení.
+ */
+function mnd_core_login_log_menu() {
+	add_management_page( __( 'Log přihlášení', 'mndgroup-core' ), __( 'Log přihlášení', 'mndgroup-core' ), 'manage_options', 'mndgroup-core-login-log', 'mnd_core_login_log_page' );
+}
+
+/**
+ * Popis události v záznamu přihlášení.
+ *
+ * @param array $row Záznam.
+ * @return string
+ */
+function mnd_core_login_event_label( $row ) {
+	switch ( isset( $row['e'] ) ? $row['e'] : '' ) {
+		case 'success':
+			return '✅ ' . __( 'přihlášení', 'mndgroup-core' );
+		case 'failed':
+			return '❌ ' . __( 'neúspěšný pokus', 'mndgroup-core' );
+		case 'lockout':
+			/* translators: %d: minutes. */
+			return '⛔ ' . sprintf( __( 'zablokováno na %d min', 'mndgroup-core' ), (int) round( ( isset( $row['d'] ) ? $row['d'] : 0 ) / MINUTE_IN_SECONDS ) );
+	}
+	return '';
+}
+
+/**
+ * Obsah stránky logu (zrušení blokací přes Údržbu webu – stejná akce).
+ */
+function mnd_core_login_log_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$log      = mnd_core_login_log( MND_CORE_LOG_MAX_ITEMS );
+	$lockouts = mnd_core_active_lockouts();
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'Log přihlášení', 'mndgroup-core' ); ?></h1>
+		<?php
+		if ( function_exists( 'mnd_core_maintenance_notice' ) ) {
+			mnd_core_maintenance_notice();
+		}
+		?>
+		<p>
+			<?php
+			if ( mnd_core_on( 'login_protection' ) ) {
+				/* translators: 1: attempts, 2: number of blocked IP addresses. */
+				echo esc_html( sprintf( __( 'Po %1$d neúspěšných pokusech se IP adresa dočasně zablokuje. Aktuálně zablokováno: %2$d.', 'mndgroup-core' ), mnd_core_login_attempts(), $lockouts ) );
+			} else {
+				esc_html_e( 'Omezení pokusů o přihlášení je vypnuté.', 'mndgroup-core' );
+			}
+			if ( ! mnd_core_on( 'login_log' ) ) {
+				echo ' ' . esc_html__( 'Log přihlášení je vypnutý – níže jsou jen starší záznamy.', 'mndgroup-core' );
+			}
+			?>
+			<a href="<?php echo esc_url( mnd_core_settings_url() ); ?>"><?php esc_html_e( 'Nastavení', 'mndgroup-core' ); ?></a>
+		</p>
+		<?php if ( $lockouts && function_exists( 'mnd_core_action_button' ) ) : ?>
+			<?php mnd_core_action_button( 'unlock', __( 'Zrušit všechny blokace', 'mndgroup-core' ), __( 'Zrušit všechny blokace přihlášení?', 'mndgroup-core' ) ); ?>
+		<?php endif; ?>
+		<table class="widefat striped" style="margin-top:1em">
+			<thead><tr><th><?php esc_html_e( 'Čas', 'mndgroup-core' ); ?></th><th><?php esc_html_e( 'Uživatel', 'mndgroup-core' ); ?></th><th><?php esc_html_e( 'Výsledek', 'mndgroup-core' ); ?></th><th><?php esc_html_e( 'IP adresa', 'mndgroup-core' ); ?></th><th><?php esc_html_e( 'Prohlížeč', 'mndgroup-core' ); ?></th></tr></thead>
+			<tbody>
+				<?php if ( ! $log ) : ?>
+					<tr><td colspan="5"><?php esc_html_e( 'Zatím prázdné.', 'mndgroup-core' ); ?></td></tr>
+				<?php endif; ?>
+				<?php foreach ( $log as $row ) : ?>
+					<tr>
+						<td><?php echo esc_html( wp_date( 'j. n. Y H:i:s', (int) $row['t'] ) ); ?></td>
+						<td><?php echo esc_html( $row['u'] ); ?></td>
+						<td><?php echo esc_html( mnd_core_login_event_label( $row ) ); ?></td>
+						<td><code><?php echo esc_html( $row['i'] ); ?></code></td>
+						<td><small><?php echo esc_html( isset( $row['a'] ) ? $row['a'] : '' ); ?></small></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<p class="description"><?php esc_html_e( 'Uchovává se posledních 200 událostí, nejvýše 90 dní.', 'mndgroup-core' ); ?></p>
+	</div>
+	<?php
 }
 
 if ( mnd_core_on( 'login_log' ) ) {
 	add_action( 'wp_login_failed', 'mnd_core_log_failed', 5 );
-	add_action( 'wp_login', 'mnd_core_log_success' );
+	add_action( 'wp_login', 'mnd_core_log_success', 10, 2 );
+	add_filter( 'manage_users_columns', 'mnd_core_users_column' );
+	add_filter( 'manage_users_custom_column', 'mnd_core_users_column_content', 10, 3 );
 }
+add_action( 'admin_menu', 'mnd_core_login_log_menu' );
 
 /**
  * Záznam přihlášení.
@@ -281,7 +400,7 @@ function mnd_core_clear_lockouts() {
  * ====================================================================== */
 
 /**
- * Verze PHP, databáze a využití paměti v patičce administrace (jen pro administrátory).
+ * Verze PHP a databáze, IP serveru a využití paměti v patičce administrace (jen pro administrátory).
  *
  * @param string $text Text patičky.
  * @return string
@@ -292,13 +411,14 @@ function mnd_core_admin_footer( $text ) {
 	}
 	global $wpdb;
 	return sprintf(
-		'%1$s · PHP %2$s · %3$s · %4$s %5$s / %6$s',
+		'%1$s · PHP %2$s · DB %3$s · IP %7$s · %4$s %5$s / %6$s',
 		$text,
 		esc_html( PHP_VERSION ),
 		esc_html( $wpdb->db_server_info() ),
 		esc_html__( 'paměť', 'mndgroup-core' ),
 		esc_html( size_format( memory_get_peak_usage( true ) ) ),
-		esc_html( ini_get( 'memory_limit' ) )
+		esc_html( ini_get( 'memory_limit' ) ),
+		esc_html( isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '?' )
 	);
 }
 if ( mnd_core_on( 'admin_footer' ) ) {
@@ -437,7 +557,79 @@ if ( 'local' === wp_get_environment_type() ) {
 }
 
 /* =========================================================================
- * 6) Hardening
+ * 6) Obrázky jako WebP
+ * Nahraný PNG/JPG se rovnou převede na WebP (originál se neukládá), fotky se otočí podle
+ * EXIF a zmenšeniny se tvoří jako WebP. GIF a SVG beze změny. Starší obrázky převede
+ * jednorázová akce v Nástroje → Údržba webu.
+ * ====================================================================== */
+
+/**
+ * Umí server ukládat WebP (GD nebo Imagick)?
+ *
+ * @return bool
+ */
+function mnd_core_webp_supported() {
+	return wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) );
+}
+
+/**
+ * Převod nahraného JPG/PNG na WebP.
+ *
+ * @param array $upload Výsledek nahrání (file, url, type).
+ * @return array
+ */
+function mnd_core_webp_upload( $upload ) {
+	if ( ! empty( $upload['error'] ) || ! isset( $upload['type'] ) || ! in_array( $upload['type'], array( 'image/jpeg', 'image/png' ), true ) || ! mnd_core_webp_supported() ) {
+		return $upload;
+	}
+	$file   = $upload['file'];
+	$editor = wp_get_image_editor( $file );
+	if ( is_wp_error( $editor ) ) {
+		return $upload;
+	}
+	$dir  = dirname( $file );
+	$name = preg_replace( '/\.(png|jpe?g)$/i', '.webp', basename( $file ) );
+	// Stejný název s jinou příponou má jen právě nahraný soubor (ten se smaže) → není potřeba „-1“.
+	$same = array_diff( (array) glob( $dir . '/' . preg_replace( '/\.webp$/', '', $name ) . '.*' ), array( $file ) );
+	if ( $same ) {
+		$name = wp_unique_filename( $dir, $name );
+	}
+	$editor->set_quality( 82 );
+	$editor->maybe_exif_rotate(); // fotky z mobilu: WebP nenese EXIF, otočit hned
+	$saved = $editor->save( $dir . '/' . $name, 'image/webp' );
+	if ( is_wp_error( $saved ) || ! is_file( $dir . '/' . $name ) ) {
+		return $upload; // když převod selže, zůstane původní soubor
+	}
+	wp_delete_file( $file );
+	return array(
+		'file' => $dir . '/' . $name,
+		'url'  => trailingslashit( dirname( $upload['url'] ) ) . $name,
+		'type' => 'image/webp',
+	);
+}
+
+/**
+ * Zmenšeniny JPG/PNG ve formátu WebP.
+ *
+ * @param array $formats Mapování formátů.
+ * @return array
+ */
+function mnd_core_webp_output_format( $formats ) {
+	if ( mnd_core_webp_supported() ) {
+		$formats['image/jpeg'] = 'image/webp';
+		$formats['image/png']  = 'image/webp';
+	}
+	return $formats;
+}
+
+if ( mnd_core_on( 'webp' ) ) {
+	add_filter( 'wp_handle_upload', 'mnd_core_webp_upload' );
+	add_filter( 'wp_handle_sideload', 'mnd_core_webp_upload' ); // REST API (tools/wp.py), WP-CLI, stažení z URL
+	add_filter( 'image_editor_output_format', 'mnd_core_webp_output_format' );
+}
+
+/* =========================================================================
+ * 7) Hardening
  * XML-RPC, editor souborů, verze WordPressu, výčet uživatelů.
  * ====================================================================== */
 
@@ -480,7 +672,7 @@ if ( mnd_core_on( 'hide_version' ) ) {
 }
 
 /**
- * Výčet uživatelů pro nepřihlášené: ?author=N a archivy autorů vrací 404
+ * Výčet uživatelů pro nepřihlášené: ?author=N a archivy autorů přesměrují na titulku
  * (web archivy autorů nepoužívá, prozrazovaly by uživatelská jména).
  */
 function mnd_core_block_author_enumeration() {
@@ -489,10 +681,8 @@ function mnd_core_block_author_enumeration() {
 	}
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( is_author() || isset( $_GET['author'] ) ) {
-		global $wp_query;
-		$wp_query->set_404();
-		status_header( 404 );
-		nocache_headers();
+		wp_safe_redirect( home_url( '/' ), 301 );
+		exit;
 	}
 }
 
@@ -527,13 +717,14 @@ if ( mnd_core_on( 'hide_users' ) ) {
 }
 
 /* =========================================================================
- * 7) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
+ * 8) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
  * ====================================================================== */
 
 require __DIR__ . '/maintenance.php';
+require __DIR__ . '/leftovers.php';
 
 /* =========================================================================
- * 8) Aktualizace pluginu z GitHub Releases (Update URI → filtr update_plugins_github.com)
+ * 9) Aktualizace pluginu z GitHub Releases (Update URI → filtr update_plugins_github.com)
  * Vydání musí obsahovat soubor mndgroup-core.zip (sestavuje GitHub Action). Na lokálním vývoji
  * vypnuto, pro test define( 'MND_UPDATER_ON_LOCAL', true ) v wp-config.php.
  * ====================================================================== */

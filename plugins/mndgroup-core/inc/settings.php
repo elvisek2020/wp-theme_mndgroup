@@ -31,6 +31,9 @@ function mnd_core_settings_defaults() {
 		'security_headers' => 1,
 		'hsts'             => 1,
 		'sitemap_no_users' => 1,
+		'sitemap_lastmod'  => 1,
+		'llms_txt'         => 1,
+		'webp'             => 1,
 		'comments_off'     => 1,
 		'core_updates'     => 'all',
 		'plugin_updates'   => 'all',
@@ -86,16 +89,23 @@ function mnd_core_settings_fields() {
 			'login_protection' => array( 'checkbox', __( 'Omezení pokusů o přihlášení', 'mndgroup-core' ), __( 'Po opakovaných chybných pokusech z jedné IP adresy se přihlášení dočasně zablokuje. Chybové hlášky neprozradí, jestli uživatel existuje.', 'mndgroup-core' ) ),
 			'login_attempts'   => array( 'number', __( 'Počet pokusů', 'mndgroup-core' ), __( 'Kolik chybných pokusů během 15 minut je povoleno.', 'mndgroup-core' ), array( 3, 20, __( 'pokusů', 'mndgroup-core' ) ) ),
 			'login_lockout'    => array( 'number', __( 'Délka blokace', 'mndgroup-core' ), __( 'Každá další blokace během 24 hodin je dvakrát delší (nejvýš 24 h). Zrušit ji jde v Nástroje → Údržba webu.', 'mndgroup-core' ), array( 5, 1440, __( 'minut', 'mndgroup-core' ) ) ),
-			'login_log'        => array( 'checkbox', __( 'Log přihlášení', 'mndgroup-core' ), __( 'Záznam přihlášení, neúspěšných pokusů a blokací (posledních 200 událostí, nejvýš 90 dní) v Nástroje → Údržba webu.', 'mndgroup-core' ) ),
+			'login_log'        => array( 'checkbox', __( 'Log přihlášení', 'mndgroup-core' ), __( 'Záznam přihlášení, neúspěšných pokusů a blokací (posledních 200 událostí, nejvýš 90 dní) v Nástroje → Log přihlášení a sloupec Poslední přihlášení v přehledu uživatelů.', 'mndgroup-core' ) ),
 		),
 		__( 'Zabezpečení', 'mndgroup-core' )   => array(
 			'xmlrpc_off'       => array( 'checkbox', __( 'Vypnout XML-RPC a pingbacky', 'mndgroup-core' ), __( 'Staré rozhraní pro vzdálené publikování, častý cíl útoků. ManageWP ho nepotřebuje.', 'mndgroup-core' ) ),
 			'file_edit_off'    => array( 'checkbox', __( 'Zakázat editor souborů', 'mndgroup-core' ), __( 'Skryje úpravy kódu šablon a pluginů v administraci (Vzhled → Editor souborů).', 'mndgroup-core' ) ),
-			'hide_users'       => array( 'checkbox', __( 'Skrýt uživatelská jména', 'mndgroup-core' ), __( 'Adresy ?author=… a archivy autorů vrací 404, seznam uživatelů v REST API jen pro přihlášené, oEmbed bez autora.', 'mndgroup-core' ) ),
+			'hide_users'       => array( 'checkbox', __( 'Skrýt uživatelská jména', 'mndgroup-core' ), __( 'Adresy ?author=… a archivy autorů přesměrují na úvodní stránku, seznam uživatelů v REST API jen pro přihlášené, oEmbed bez autora.', 'mndgroup-core' ) ),
 			'hide_version'     => array( 'checkbox', __( 'Skrýt verzi WordPressu', 'mndgroup-core' ), __( 'Bez meta značky generator.', 'mndgroup-core' ) ),
 			'security_headers' => array( 'checkbox', __( 'Bezpečnostní HTTP hlavičky', 'mndgroup-core' ), __( 'X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy.', 'mndgroup-core' ) ),
-			'hsts'             => array( 'checkbox', __( 'HSTS (vynutit HTTPS)', 'mndgroup-core' ), __( 'Prohlížeč bude web rok otevírat jen přes HTTPS. Zapínejte jen, pokud HTTPS funguje spolehlivě.', 'mndgroup-core' ) ),
-			'sitemap_no_users' => array( 'checkbox', __( 'Sitemap bez uživatelů', 'mndgroup-core' ), __( 'Z /wp-sitemap.xml zmizí seznam autorů.', 'mndgroup-core' ) ),
+			'hsts'             => array( 'checkbox', __( 'HSTS (vynutit HTTPS)', 'mndgroup-core' ), __( 'Prohlížeč bude web rok otevírat jen přes HTTPS (bez subdomén, nikdy na lokálním vývoji). Zapínejte jen, pokud HTTPS funguje spolehlivě.', 'mndgroup-core' ) ),
+		),
+		__( 'SEO', 'mndgroup-core' )           => array(
+			'sitemap_no_users' => array( 'checkbox', __( 'Sitemap bez uživatelů', 'mndgroup-core' ), __( 'Z /wp-sitemap.xml zmizí seznam autorů (prozrazuje přihlašovací jména).', 'mndgroup-core' ) ),
+			'sitemap_lastmod'  => array( 'checkbox', __( 'Datum změny v sitemapě', 'mndgroup-core' ), __( 'Vyhledávače poznají, které stránky se změnily.', 'mndgroup-core' ) ),
+			'llms_txt'         => array( 'checkbox', __( '/llms.txt', 'mndgroup-core' ), __( 'Stručný textový přehled webu pro AI vyhledávače (llmstxt.org) na adrese /llms.txt.', 'mndgroup-core' ) ),
+		),
+		__( 'Média', 'mndgroup-core' )         => array(
+			'webp'             => array( 'checkbox', __( 'Obrázky jako WebP', 'mndgroup-core' ), __( 'Nahrané JPG a PNG se uloží rovnou jako WebP (fotky se otočí podle EXIF, originál se neukládá) a zmenšeniny se tvoří ve WebP. GIF a SVG beze změny. Starší obrázky převede Nástroje → Údržba webu.', 'mndgroup-core' ) ),
 		),
 		__( 'Komentáře', 'mndgroup-core' )     => array(
 			'comments_off'     => array( 'checkbox', __( 'Vypnout komentáře', 'mndgroup-core' ), __( 'Komentáře a pingbacky úplně vypnuté včetně administrace, kanálů a widgetu.', 'mndgroup-core' ) ),
@@ -122,7 +132,7 @@ function mnd_core_settings_fields() {
 			),
 		),
 		__( 'Administrace', 'mndgroup-core' )  => array(
-			'admin_footer'     => array( 'checkbox', __( 'Info o serveru v patičce', 'mndgroup-core' ), __( 'Verze PHP, databáze a využití paměti v patičce administrace (jen pro administrátory).', 'mndgroup-core' ) ),
+			'admin_footer'     => array( 'checkbox', __( 'Info o serveru v patičce', 'mndgroup-core' ), __( 'Verze PHP a databáze, IP serveru a využití paměti v patičce administrace (jen pro administrátory).', 'mndgroup-core' ) ),
 			'health_widget'    => array( 'checkbox', __( 'Widget Zdraví webu', 'mndgroup-core' ), __( 'Přehled verzí, aktualizací, databáze a přihlášení na Nástěnce.', 'mndgroup-core' ) ),
 		),
 	);
