@@ -2,6 +2,16 @@
 
 ## Nevydáno
 
+## 2.4.0 — 2026-10-05
+### Šablona
+- **Česká typografie** (náhrada pluginu Zalomení): pevné mezery za jednopísmennými předložkami k, s, v, z, mezi číslem a jednotkou (nově i „mil.“, „mld.“, „km“, „MWh“…), v číslech s mezerou, v měřítku a za řadovou číslovkou. Jen v české verzi webu a nikdy uvnitř odkazů, kódu a skriptů – v angličtině už nevzniká chybná mezera v „MND’s achievements“. Dokud je Zalomení aktivní, šablona nic nedělá
+
+### MND Group Core
+- Úklid po odebraných pluginech zná i nastavení pluginu Zalomení
+
+### Vydání
+- Kontrola stránek ověřuje pevné mezery v české verzi a jejich absenci v anglické
+
 ## 2.3.0 — 2026-10-05
 ### Šablona
 - **SEO**: meta description ze stručného výpisu stránky (Stránky → Upravit → Stručný výpis, jinak začátek textu), Open Graph s jazykovými verzemi z Polylangu, karta pro X a strukturovaná data organizace a webu; obrázek pro sdílení s logem MND. S aktivním SEO pluginem (Yoast, Rank Math…) se nevypisuje nic, aby značky nebyly dvakrát

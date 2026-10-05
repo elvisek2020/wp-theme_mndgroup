@@ -117,6 +117,11 @@ try {
 					visible ? ok('seznam firem se rozbalí') : fail(`${label}: seznam firem se nerozbalil`);
 				}
 
+				// Česká typografie (inc/typography.php): pevná mezera za jednopísmennou předložkou, v angličtině ne.
+				const nbsp = await page.evaluate(() => /(^|[\s(„])[ksvz]\u00a0/i.test(document.body.innerText));
+				const czech = pg.path === '/';
+				nbsp === czech ? ok(czech ? 'pevné mezery za předložkami' : 'v angličtině bez českých pevných mezer') : fail(`${label}: pevné mezery za předložkami ${nbsp ? 'jsou' : 'chybí'}`);
+
 				const langs = await page.locator('.mnd-lang li').count();
 				langs === 2 ? ok('přepínač jazyků CS/EN') : fail(`${label}: přepínač jazyků má ${langs} položek`);
 			}

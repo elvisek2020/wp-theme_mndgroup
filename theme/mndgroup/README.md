@@ -14,6 +14,7 @@ Vlastní šablona pro www.mndgroup.eu. Hybrid: PHP šablony + `theme.json`. Bez 
 | `inc/post-types.php` | typ obsahu `slide` (bannery) – stejný název jako v původní šabloně |
 | `inc/navigation.php` | dlaždice: ikony podle pořadí (nebo CSS třídy `icon-oil` …) a rozbalovací tlačítka |
 | `inc/polylang.php` | překládané slidy, převzetí přiřazení menu po přepnutí šablony |
+| `inc/typography.php` | česká typografie: pevné mezery za předložkami k, s, v, z, mezi číslem a jednotkou, v číslech, měřítku a za řadovou číslovkou – jen v češtině, mimo značky a kód (nahrazuje plugin Zalomení) |
 | `inc/seo.php` | meta description (ze stručného výpisu stránky, jinak z textu), Open Graph s jazyky Polylangu, Twitter karta, JSON-LD Organization + WebSite; s aktivním SEO pluginem mlčí |
 | `inc/analytics-consent.php` | GA4 s cookie lištou (Consent Mode v2, bez souhlasu se Google nenačte), odkaz „Nastavení cookies“ v patičce, převzetí ID z MonsterInsights |
 | `inc/updater.php` | aktualizace šablony z GitHub Releases |

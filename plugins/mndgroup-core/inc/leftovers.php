@@ -80,6 +80,13 @@ function mnd_core_leftover_defs() {
 			'options' => array( 'scporder_%' ),
 			'paths'   => array(),
 		),
+		'zalomeni'      => array(
+			'name'    => 'Zalomení',
+			'plugin'  => 'zalomeni/zalomeni.php',
+			'tables'  => array(),
+			'options' => array( 'zalomeni_%' ),
+			'paths'   => array(),
+		),
 		'w3tc'          => array(
 			'name'    => 'W3 Total Cache',
 			'plugin'  => 'w3-total-cache/w3-total-cache.php',

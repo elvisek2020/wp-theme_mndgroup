@@ -21,6 +21,7 @@ $mnd_modules = array(
 	'post-types',        // typ obsahu „slide“ – bannery
 	'navigation',        // dlaždice: ikony a rozbalovací tlačítka
 	'polylang',          // překládané slidy, převzetí menu po aktivaci
+	'typography',        // české pevné mezery za předložkami a mezi číslem a jednotkou (nahrazuje Zalomení)
 	'seo',               // meta description, Open Graph, JSON-LD (vypne se, když je aktivní SEO plugin)
 	'analytics-consent', // GA4 s cookie lištou (jen s vyplněným ID)
 	'updater',           // aktualizace z GitHub Releases

@@ -11,7 +11,7 @@ Vlastní šablona a doprovodný plugin pro rozcestník skupiny MND [www.mndgroup
 
 | Balíček | Typ | Popis |
 |---|---|---|
-| **MND Group** (`theme/mndgroup`) | šablona | vzhled webu: bannery, dlaždice se společnostmi, text, patička s mapou, čeština a angličtina; SEO a GA4 s cookie lištou |
+| **MND Group** (`theme/mndgroup`) | šablona | vzhled webu: bannery, dlaždice se společnostmi, text, patička s mapou, čeština a angličtina; SEO, GA4 s cookie lištou, česká typografie |
 | **MND Group Core** (`plugins/mndgroup-core`) | plugin | funkce nezávislé na šabloně: přihlášení, bezpečnost, WebP, sitemap, aktualizace, údržba |
 
 Obojí se vydává společně se stejným číslem verze a aktualizuje se přímo z GitHub Releases.
@@ -30,6 +30,7 @@ Obojí se vydává společně se stejným číslem verze a aktualizuje se přím
 **Obsah**
 - **SEO**: meta description ze stručného výpisu stránky (jinak ze začátku textu), Open Graph s jazykovými verzemi, karta pro X, strukturovaná data organizace a webu; s aktivním SEO pluginem se nic nevypisuje dvakrát
 - **Google Analytics 4 s cookie lištou**: bez vyplněného ID se nenačte nic; s ID se návštěvníkům zobrazí lišta Přijmout / Odmítnout a Google se načte až po souhlasu (Consent Mode v2), volbu jde změnit odkazem „Nastavení cookies“ v patičce; ID se při přechodu samo převezme z MonsterInsights
+- **Česká typografie**: pevné mezery za jednopísmennými předložkami (k, s, v, z), mezi číslem a jednotkou („500 mil.“, „10 %“), v číslech a za řadovou číslovkou – předložka nezůstane na konci řádku; jen v české verzi (náhrada pluginu Zalomení)
 - Bannery jako typ obsahu *Slidy* s pořadím a jazykovou verzí, dlaždice a společnosti z menu, adresa v patičce z widgetu
 
 **Technicky**
