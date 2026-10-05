@@ -2,37 +2,53 @@
 /**
  * MND Group Core — veškerá funkcionalita (načítá mndgroup-core.php).
  *
+ * Každá funkce jde zapnout a vypnout v Nastavení → MND Group Core (inc/settings.php).
+ *
  * 1) Omezení pokusů o přihlášení (nahrazuje All-In-One Security)
  * 2) Log přihlášení (nahrazuje Simple Login Log)
  * 3) Info o serveru v patičce administrace (nahrazuje Server IP & Memory Usage)
  * 4) Komentáře vypnuté
- * 5) Automatické aktualizace (WordPress, pluginy, překlady – šablona a plugin MND ručně)
- * 6) Hardening (XML-RPC, editor souborů, výčet uživatelů)
- * 7) Zjednodušená administrace (nahrazuje Admin Menu Editor)
- * 8) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
- * 9) Aktualizace pluginu z GitHub Releases
+ * 5) Automatické aktualizace (WordPress, pluginy a šablony – šablona a plugin MND vždy ručně)
+ * 6) Hardening (XML-RPC, editor souborů, uživatelská jména, verze WordPressu)
+ * 7) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
+ * 8) Aktualizace pluginu z GitHub Releases
  *
  * @package MNDGroupCore
  */
 
 defined( 'ABSPATH' ) || exit;
 
+require __DIR__ . '/settings.php';
+
 /* =========================================================================
  * 1) Omezení pokusů o přihlášení (nahrazuje All-In-One Security)
- * Po MND_CORE_LOGIN_ATTEMPTS chybných pokusech během 15 minut se IP zablokuje na 30 minut,
+ * Po nastaveném počtu chybných pokusů během 15 minut se IP zablokuje na nastavenou dobu,
  * každé další zablokování během 24 hodin dobu zdvojnásobí (max. 24 h). Platí pro wp-login.php
  * i všechna další místa, kde se ověřuje heslo. Odblokovat jde v Nástroje → Údržba webu.
  * ====================================================================== */
 
-if ( ! defined( 'MND_CORE_LOGIN_ATTEMPTS' ) ) {
-	define( 'MND_CORE_LOGIN_ATTEMPTS', 5 );
-}
-
 const MND_CORE_LOGIN_WINDOW  = 15 * MINUTE_IN_SECONDS;
-const MND_CORE_LOCKOUT       = 30 * MINUTE_IN_SECONDS;
 const MND_CORE_LOCKOUT_MAX   = DAY_IN_SECONDS;
 const MND_CORE_LOG_OPTION    = 'mnd_core_login_log';
 const MND_CORE_LOG_MAX_ITEMS = 200;
+
+/**
+ * Povolený počet chybných pokusů (nastavení).
+ *
+ * @return int
+ */
+function mnd_core_login_attempts() {
+	return max( 3, (int) mnd_core_get( 'login_attempts' ) );
+}
+
+/**
+ * Délka první blokace v sekundách (nastavení).
+ *
+ * @return int
+ */
+function mnd_core_lockout_seconds() {
+	return max( 5, (int) mnd_core_get( 'login_lockout' ) ) * MINUTE_IN_SECONDS;
+}
 
 /**
  * IP adresa návštěvníka. Za reverzní proxy lze upravit filtrem mnd_core_client_ip.
@@ -92,7 +108,7 @@ function mnd_core_authenticate( $user, $username ) {
 
 	if ( is_wp_error( $user ) && array_intersect( $user->get_error_codes(), array( 'invalid_username', 'invalid_email', 'incorrect_password' ) ) ) {
 		$fails = (int) get_transient( mnd_core_login_key( 'fail', $ip ) ) + 1;
-		$left  = MND_CORE_LOGIN_ATTEMPTS - $fails;
+		$left  = mnd_core_login_attempts() - $fails;
 		$text  = __( '<strong>Chyba:</strong> Nesprávné uživatelské jméno, e-mail nebo heslo.', 'mndgroup-core' );
 		if ( $left <= 0 ) {
 			$text = __( '<strong>Chyba:</strong> Příliš mnoho neúspěšných pokusů o přihlášení. Přihlášení je dočasně zablokované.', 'mndgroup-core' );
@@ -105,7 +121,6 @@ function mnd_core_authenticate( $user, $username ) {
 
 	return $user;
 }
-add_filter( 'authenticate', 'mnd_core_authenticate', 99, 2 );
 
 /**
  * Neúspěšný pokus: započítat a případně zablokovat.
@@ -120,9 +135,8 @@ function mnd_core_login_failed( $username ) {
 
 	$fail_key = mnd_core_login_key( 'fail', $ip );
 	$fails    = (int) get_transient( $fail_key ) + 1;
-	mnd_core_log_login( 'failed', $username, $ip );
 
-	if ( $fails < MND_CORE_LOGIN_ATTEMPTS ) {
+	if ( $fails < mnd_core_login_attempts() ) {
 		set_transient( $fail_key, $fails, MND_CORE_LOGIN_WINDOW );
 		return;
 	}
@@ -130,26 +144,28 @@ function mnd_core_login_failed( $username ) {
 	// Blokace – každá další během 24 h je dvakrát delší.
 	$count_key = mnd_core_login_key( 'count', $ip );
 	$count     = (int) get_transient( $count_key ) + 1;
-	$duration  = (int) min( MND_CORE_LOCKOUT * pow( 2, $count - 1 ), MND_CORE_LOCKOUT_MAX );
+	$duration  = (int) min( mnd_core_lockout_seconds() * pow( 2, $count - 1 ), MND_CORE_LOCKOUT_MAX );
 
 	set_transient( mnd_core_login_key( 'lock', $ip ), time() + $duration, $duration );
 	set_transient( $count_key, $count, DAY_IN_SECONDS );
 	delete_transient( $fail_key );
-	mnd_core_log_login( 'lockout', $username, $ip, $duration );
+	if ( mnd_core_on( 'login_log' ) ) {
+		mnd_core_log_login( 'lockout', $username, $ip, $duration );
+	}
 }
-add_action( 'wp_login_failed', 'mnd_core_login_failed' );
 
 /**
- * Úspěšné přihlášení: vynulovat počítadlo a zapsat do záznamu.
- *
- * @param string $user_login Uživatelské jméno.
+ * Úspěšné přihlášení: vynulovat počítadlo.
  */
-function mnd_core_login_success( $user_login ) {
-	$ip = mnd_core_client_ip();
-	delete_transient( mnd_core_login_key( 'fail', $ip ) );
-	mnd_core_log_login( 'success', $user_login, $ip );
+function mnd_core_login_success() {
+	delete_transient( mnd_core_login_key( 'fail', mnd_core_client_ip() ) );
 }
-add_action( 'wp_login', 'mnd_core_login_success' );
+
+if ( mnd_core_on( 'login_protection' ) ) {
+	add_filter( 'authenticate', 'mnd_core_authenticate', 99, 2 );
+	add_action( 'wp_login_failed', 'mnd_core_login_failed' );
+	add_action( 'wp_login', 'mnd_core_login_success' );
+}
 
 /* =========================================================================
  * 2) Log přihlášení (nahrazuje Simple Login Log)
@@ -187,6 +203,33 @@ function mnd_core_log_login( $type, $username, $ip, $duration = 0 ) {
 	);
 
 	update_option( MND_CORE_LOG_OPTION, array_values( $log ), false );
+}
+
+/**
+ * Neúspěšný pokus do záznamu (během blokace se nezapisuje).
+ *
+ * @param string $username Uživatelské jméno.
+ */
+function mnd_core_log_failed( $username ) {
+	$ip = mnd_core_client_ip();
+	if ( mnd_core_on( 'login_protection' ) && mnd_core_locked_until( $ip ) ) {
+		return;
+	}
+	mnd_core_log_login( 'failed', $username, $ip );
+}
+
+/**
+ * Úspěšné přihlášení do záznamu.
+ *
+ * @param string $user_login Uživatelské jméno.
+ */
+function mnd_core_log_success( $user_login ) {
+	mnd_core_log_login( 'success', $user_login, mnd_core_client_ip() );
+}
+
+if ( mnd_core_on( 'login_log' ) ) {
+	add_action( 'wp_login_failed', 'mnd_core_log_failed', 5 );
+	add_action( 'wp_login', 'mnd_core_log_success' );
 }
 
 /**
@@ -258,7 +301,9 @@ function mnd_core_admin_footer( $text ) {
 		esc_html( ini_get( 'memory_limit' ) )
 	);
 }
-add_filter( 'admin_footer_text', 'mnd_core_admin_footer', 20 );
+if ( mnd_core_on( 'admin_footer' ) ) {
+	add_filter( 'admin_footer_text', 'mnd_core_admin_footer', 20 );
+}
 
 /* =========================================================================
  * 4) Komentáře vypnuté
@@ -278,13 +323,6 @@ function mnd_core_remove_comment_support() {
 		}
 	}
 }
-add_action( 'init', 'mnd_core_remove_comment_support', 100 );
-
-add_filter( 'comments_open', '__return_false', 20 );
-add_filter( 'pings_open', '__return_false', 20 );
-add_filter( 'comments_array', '__return_empty_array', 20 );
-add_filter( 'get_comments_number', '__return_zero', 20 );
-add_filter( 'feed_links_show_comments_feed', '__return_false' );
 
 /**
  * Kanál komentářů vrací 404.
@@ -296,7 +334,6 @@ function mnd_core_comment_feed_404() {
 		status_header( 404 );
 	}
 }
-add_action( 'template_redirect', 'mnd_core_comment_feed_404', 1 );
 
 /**
  * Administrace: bez menu Komentáře a Nastavení → Diskuze.
@@ -305,7 +342,6 @@ function mnd_core_comments_admin_menu() {
 	remove_menu_page( 'edit-comments.php' );
 	remove_submenu_page( 'options-general.php', 'options-discussion.php' );
 }
-add_action( 'admin_menu', 'mnd_core_comments_admin_menu', 999 );
 
 /**
  * Přímý přístup na stránky komentářů přesměrovat na Nástěnku.
@@ -317,7 +353,6 @@ function mnd_core_comments_admin_redirect() {
 		exit;
 	}
 }
-add_action( 'admin_init', 'mnd_core_comments_admin_redirect' );
 
 /**
  * Bez komentářů v liště administrace.
@@ -327,7 +362,6 @@ add_action( 'admin_init', 'mnd_core_comments_admin_redirect' );
 function mnd_core_comments_admin_bar( $bar ) {
 	$bar->remove_node( 'comments' );
 }
-add_action( 'admin_bar_menu', 'mnd_core_comments_admin_bar', 999 );
 
 /**
  * Bez widgetu Nejnovější komentáře.
@@ -335,42 +369,67 @@ add_action( 'admin_bar_menu', 'mnd_core_comments_admin_bar', 999 );
 function mnd_core_comments_widgets() {
 	unregister_widget( 'WP_Widget_Recent_Comments' );
 }
-add_action( 'widgets_init', 'mnd_core_comments_widgets', 20 );
+
+if ( mnd_core_on( 'comments_off' ) ) {
+	add_action( 'init', 'mnd_core_remove_comment_support', 100 );
+	add_filter( 'comments_open', '__return_false', 20 );
+	add_filter( 'pings_open', '__return_false', 20 );
+	add_filter( 'comments_array', '__return_empty_array', 20 );
+	add_filter( 'get_comments_number', '__return_zero', 20 );
+	add_filter( 'feed_links_show_comments_feed', '__return_false' );
+	add_action( 'template_redirect', 'mnd_core_comment_feed_404', 1 );
+	add_action( 'admin_menu', 'mnd_core_comments_admin_menu', 999 );
+	add_action( 'admin_init', 'mnd_core_comments_admin_redirect' );
+	add_action( 'admin_bar_menu', 'mnd_core_comments_admin_bar', 999 );
+	add_action( 'widgets_init', 'mnd_core_comments_widgets', 20 );
+}
 
 /* =========================================================================
  * 5) Automatické aktualizace
- * WordPress (i hlavní verze), pluginy a překlady se aktualizují samy. Šablona a plugin MND
- * se jen nabídnou v Nástěnka → Aktualizace a instalují se kliknutím.
+ * WordPress podle nastavení (všechny verze / jen opravné / vypnuto), pluginy a šablony všechny
+ * nebo podle volby u jednotlivých položek. Šablona a plugin MND se automaticky neaktualizují
+ * nikdy – nabídnou se v Nástěnka → Aktualizace a instalují se kliknutím.
  * ====================================================================== */
 
-add_filter( 'allow_major_auto_core_updates', '__return_true' );
-add_filter( 'allow_minor_auto_core_updates', '__return_true' );
-add_filter( 'auto_update_translation', '__return_true' );
-
 /**
- * Pluginy se aktualizují samy – kromě MND Group Core, ten se instaluje ručně z GitHub Releases
- * (Nástěnka → Aktualizace), aby nové vydání nemohlo samo rozbít web.
+ * Plugin MND Group Core nikdy automaticky; ostatní podle nastavení.
  *
  * @param bool|null $update Aktualizovat?
  * @param object    $item   Plugin.
- * @return bool
+ * @return bool|null
  */
 function mnd_core_auto_update_plugin( $update, $item ) {
-	return ! ( isset( $item->plugin ) && MND_CORE_BASENAME === $item->plugin );
+	if ( isset( $item->plugin ) && MND_CORE_BASENAME === $item->plugin ) {
+		return false;
+	}
+	return 'all' === mnd_core_get( 'plugin_updates' ) ? true : $update;
 }
 add_filter( 'auto_update_plugin', 'mnd_core_auto_update_plugin', 10, 2 );
 
 /**
- * Šablony se aktualizují samy – kromě šablony MND Group (ručně z GitHub Releases).
+ * Šablona MND Group nikdy automaticky; ostatní podle nastavení.
  *
  * @param bool|null $update Aktualizovat?
  * @param object    $item   Šablona.
- * @return bool
+ * @return bool|null
  */
 function mnd_core_auto_update_theme( $update, $item ) {
-	return ! ( isset( $item->theme ) && 'mndgroup' === $item->theme );
+	if ( isset( $item->theme ) && 'mndgroup' === $item->theme ) {
+		return false;
+	}
+	return 'all' === mnd_core_get( 'plugin_updates' ) ? true : $update;
 }
 add_filter( 'auto_update_theme', 'mnd_core_auto_update_theme', 10, 2 );
+
+switch ( mnd_core_get( 'core_updates' ) ) {
+	case 'all':
+		add_filter( 'allow_major_auto_core_updates', '__return_true' );
+		add_filter( 'allow_minor_auto_core_updates', '__return_true' );
+		break;
+	case 'off':
+		add_filter( 'auto_update_core', '__return_false' );
+		break;
+}
 
 // Lokální vývoj: žádné automatické aktualizace.
 if ( 'local' === wp_get_environment_type() ) {
@@ -386,14 +445,11 @@ if ( 'local' === wp_get_environment_type() ) {
  * XML-RPC úplně vypnuté – web ho nepoužívá (ManageWP má vlastní rozhraní) a je to
  * oblíbený cíl útoků hrubou silou. Povolit jde filtrem mnd_core_allow_xmlrpc.
  */
-if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST && ! apply_filters( 'mnd_core_allow_xmlrpc', false ) ) {
+if ( mnd_core_on( 'xmlrpc_off' ) && defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST && ! apply_filters( 'mnd_core_allow_xmlrpc', false ) ) {
 	status_header( 403 );
 	header( 'Content-Type: text/plain; charset=utf-8' );
 	exit( 'XML-RPC is disabled.' );
 }
-add_filter( 'xmlrpc_enabled', '__return_false' );
-add_filter( 'xmlrpc_methods', '__return_empty_array' );
-remove_action( 'wp_head', 'rsd_link' );
 
 /**
  * Bez hlavičky X-Pingback.
@@ -405,16 +461,23 @@ function mnd_core_remove_pingback_header( $headers ) {
 	unset( $headers['X-Pingback'] );
 	return $headers;
 }
-add_filter( 'wp_headers', 'mnd_core_remove_pingback_header' );
+if ( mnd_core_on( 'xmlrpc_off' ) ) {
+	add_filter( 'xmlrpc_enabled', '__return_false' );
+	add_filter( 'xmlrpc_methods', '__return_empty_array' );
+	add_filter( 'wp_headers', 'mnd_core_remove_pingback_header' );
+	remove_action( 'wp_head', 'rsd_link' );
+}
 
 // Editor souborů šablon a pluginů v administraci (změny kódu jen přes Git/vydání).
-if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
+if ( mnd_core_on( 'file_edit_off' ) && ! defined( 'DISALLOW_FILE_EDIT' ) ) {
 	define( 'DISALLOW_FILE_EDIT', true );
 }
 
 // Verze WordPressu se nevypisuje.
-remove_action( 'wp_head', 'wp_generator' );
-add_filter( 'the_generator', '__return_empty_string' );
+if ( mnd_core_on( 'hide_version' ) ) {
+	remove_action( 'wp_head', 'wp_generator' );
+	add_filter( 'the_generator', '__return_empty_string' );
+}
 
 /**
  * Výčet uživatelů pro nepřihlášené: ?author=N a archivy autorů vrací 404
@@ -432,7 +495,6 @@ function mnd_core_block_author_enumeration() {
 		nocache_headers();
 	}
 }
-add_action( 'template_redirect', 'mnd_core_block_author_enumeration', 1 );
 
 /**
  * REST API: seznam uživatelů jen pro přihlášené (editor ho potřebuje pro výběr autora).
@@ -446,7 +508,6 @@ function mnd_core_rest_users( $endpoints ) {
 	}
 	return $endpoints;
 }
-add_filter( 'rest_endpoints', 'mnd_core_rest_users' );
 
 /**
  * oEmbed bez jména a odkazu na autora.
@@ -458,121 +519,21 @@ function mnd_core_oembed_author( $data ) {
 	unset( $data['author_name'], $data['author_url'] );
 	return $data;
 }
-add_filter( 'oembed_response_data', 'mnd_core_oembed_author' );
+
+if ( mnd_core_on( 'hide_users' ) ) {
+	add_action( 'template_redirect', 'mnd_core_block_author_enumeration', 1 );
+	add_filter( 'rest_endpoints', 'mnd_core_rest_users' );
+	add_filter( 'oembed_response_data', 'mnd_core_oembed_author' );
+}
 
 /* =========================================================================
- * 7) Zjednodušená administrace (nahrazuje Admin Menu Editor)
- * Menu skrývá položky, které správci obsahu nepotřebují. Skrytí není zákaz – stránky zůstávají
- * dostupné. Úplné menu si administrátor zapne v Uživatelé → Profil.
- * ====================================================================== */
-
-const MND_CORE_FULL_MENU_META = 'mnd_core_full_menu';
-
-/**
- * Položky menu skryté ve zjednodušeném režimu (slug stránky menu).
- *
- * @return string[]
- */
-function mnd_core_hidden_menu_items() {
-	return (array) apply_filters(
-		'mnd_core_hidden_menu_items',
-		array(
-			'tools.php',                // Nástroje
-			'options-general.php',      // Nastavení
-			'mlang',                    // Polylang → Jazyky
-			'aiowpsec',                 // All-In-One Security (pokud ještě zůstal)
-			'monsterinsights_settings', // MonsterInsights (pokud ještě zůstal)
-			'huge_it_light_box',        // Huge IT Lightbox (pokud ještě zůstal)
-		)
-	);
-}
-
-/**
- * Má aktuální uživatel úplné menu?
- *
- * @return bool
- */
-function mnd_core_full_menu() {
-	return (bool) get_user_meta( get_current_user_id(), MND_CORE_FULL_MENU_META, true );
-}
-
-/**
- * Skrytí položek menu.
- */
-function mnd_core_simplify_menu() {
-	if ( mnd_core_full_menu() ) {
-		return;
-	}
-	foreach ( mnd_core_hidden_menu_items() as $slug ) {
-		remove_menu_page( $slug );
-	}
-}
-add_action( 'admin_menu', 'mnd_core_simplify_menu', 9999 );
-
-/**
- * Přepínač v profilu (jen pro administrátory).
- *
- * @param WP_User $user Upravovaný uživatel.
- */
-function mnd_core_full_menu_field( $user ) {
-	if ( ! current_user_can( 'manage_options' ) || ! user_can( $user, 'manage_options' ) ) {
-		return;
-	}
-	?>
-	<h2><?php esc_html_e( 'Administrace MND Group', 'mndgroup-core' ); ?></h2>
-	<table class="form-table" role="presentation">
-		<tr>
-			<th scope="row"><?php esc_html_e( 'Menu administrace', 'mndgroup-core' ); ?></th>
-			<td>
-				<label for="mndgroup-core-full-menu">
-					<input type="checkbox" name="mnd_core_full_menu" id="mndgroup-core-full-menu" value="1" <?php checked( (bool) get_user_meta( $user->ID, MND_CORE_FULL_MENU_META, true ) ); ?>>
-					<?php esc_html_e( 'Zobrazit úplné menu (Nástroje, Nastavení, Jazyky…)', 'mndgroup-core' ); ?>
-				</label>
-				<p class="description"><?php esc_html_e( 'Ve výchozím stavu jsou technické položky skryté, aby se v administraci snáz orientovalo.', 'mndgroup-core' ); ?></p>
-			</td>
-		</tr>
-	</table>
-	<?php
-}
-add_action( 'show_user_profile', 'mnd_core_full_menu_field' );
-add_action( 'edit_user_profile', 'mnd_core_full_menu_field' );
-
-/**
- * Uložení přepínače (nonce kontroluje formulář profilu WordPressu).
- *
- * @param int $user_id ID uživatele.
- */
-function mnd_core_full_menu_save( $user_id ) {
-	if ( ! current_user_can( 'edit_user', $user_id ) || ! current_user_can( 'manage_options' ) || ! user_can( $user_id, 'manage_options' ) ) {
-		return;
-	}
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing
-	if ( ! empty( $_POST['mnd_core_full_menu'] ) ) {
-		update_user_meta( $user_id, MND_CORE_FULL_MENU_META, 1 );
-	} else {
-		delete_user_meta( $user_id, MND_CORE_FULL_MENU_META );
-	}
-}
-add_action( 'personal_options_update', 'mnd_core_full_menu_save' );
-add_action( 'edit_user_profile_update', 'mnd_core_full_menu_save' );
-
-/**
- * Nástěnka bez novinek z WordPress.org a rychlého konceptu (web příspěvky nepoužívá).
- */
-function mnd_core_dashboard_cleanup() {
-	remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );
-	remove_meta_box( 'dashboard_quick_press', 'dashboard', 'side' );
-}
-add_action( 'wp_dashboard_setup', 'mnd_core_dashboard_cleanup', 20 );
-
-/* =========================================================================
- * 8) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
+ * 7) Údržba webu — Nástroje → Údržba webu (inc/maintenance.php)
  * ====================================================================== */
 
 require __DIR__ . '/maintenance.php';
 
 /* =========================================================================
- * 9) Aktualizace pluginu z GitHub Releases (Update URI → filtr update_plugins_github.com)
+ * 8) Aktualizace pluginu z GitHub Releases (Update URI → filtr update_plugins_github.com)
  * Vydání musí obsahovat soubor mndgroup-core.zip (sestavuje GitHub Action). Na lokálním vývoji
  * vypnuto, pro test define( 'MND_UPDATER_ON_LOCAL', true ) v wp-config.php.
  * ====================================================================== */

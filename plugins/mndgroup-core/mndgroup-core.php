@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MND Group Core
  * Plugin URI: https://github.com/elvisek2020/wp-theme_mndgroup
- * Description: Funkce webu nezávislé na šabloně — ochrana a log přihlášení, hardening a bezpečnostní hlavičky, vypnuté komentáře, zjednodušená administrace, automatické aktualizace, údržba webu. Nahrazuje 4 pluginy.
- * Version: 2.1.1
+ * Description: Funkce webu nezávislé na šabloně — ochrana a log přihlášení, hardening a bezpečnostní hlavičky, vypnuté komentáře, automatické aktualizace, údržba webu. Vše jde zapnout a vypnout v Nastavení → MND Group Core.
+ * Version: 2.2.0
  * Requires at least: 6.5
  * Tested up to: 7.1
  * Requires PHP: 7.4

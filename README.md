@@ -50,16 +50,16 @@ Bannery se spravují v *Slidy* (název + obrázek 1920 × 484 px, pořadí polem
 
 ## Plugin MND Group Core
 
-Nahrazuje čtyři dřívější pluginy (All-In-One Security, Simple Login Log, Admin Menu Editor, Server IP & Memory Usage) a funguje nezávisle na šabloně.
+Nahrazuje tři dřívější pluginy (All-In-One Security, Simple Login Log, Server IP & Memory Usage) a funguje nezávisle na šabloně. Každou funkci jde zapnout a vypnout v *Nastavení → MND Group Core* (výchozí stav = vše zapnuté).
 
 | Oblast | Co dělá |
 |---|---|
-| Přihlášení | omezení pokusů (5 za 15 min → blokace IP na 30 min, další blokace 2× déle), obecné chybové hlášky, log přihlášení |
+| Přihlášení | omezení pokusů (výchozí 5 za 15 min → blokace IP na 30 min, další blokace 2× déle), obecné chybové hlášky, log přihlášení |
 | Bezpečnost | vypnuté XML-RPC a pingbacky, zakázaný editor souborů, skrytý výčet uživatelů (`?author=`, REST, oEmbed), bezpečnostní HTTP hlavičky |
 | SEO | sitemap bez uživatelů |
 | Komentáře | úplně vypnuté včetně administrace a kanálů |
-| Administrace | zjednodušené menu (úplné si administrátor zapne v profilu), Nástěnka bez novinek a rychlého konceptu, info o serveru v patičce |
-| Aktualizace | WordPress, pluginy a překlady automaticky; šablona i plugin MND z GitHubu (nabídnou se, instalují se kliknutím) |
+| Administrace | info o serveru v patičce administrace |
+| Aktualizace | WordPress (všechny verze / jen opravné / vypnuto) a pluginy a šablony (všechny / podle volby) automaticky; šablona i plugin MND z GitHubu (nabídnou se, instalují se kliknutím) |
 | Nástěnka | widget Zdraví webu: verze a aktualizace, velikost databáze, přihlášení, poslední údržba |
 
 **Údržba webu** — *Nástroje → Údržba webu*

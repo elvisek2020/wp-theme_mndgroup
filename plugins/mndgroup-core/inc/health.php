@@ -50,7 +50,7 @@ function mnd_core_health_mark_maintenance() {
  * Widget na Nástěnce.
  */
 function mnd_core_dashboard_widget_register() {
-	if ( current_user_can( 'manage_options' ) ) {
+	if ( current_user_can( 'manage_options' ) && mnd_core_on( 'health_widget' ) ) {
 		wp_add_dashboard_widget( 'mnd_core_status', __( 'Zdraví webu', 'mndgroup-core' ), 'mnd_core_dashboard_widget' );
 	}
 }
@@ -121,6 +121,10 @@ function mnd_core_dashboard_widget() {
 			<?php endforeach; ?>
 		</ul>
 	<?php endif; ?>
-	<p><a href="<?php echo esc_url( mnd_core_maintenance_url() ); ?>"><?php esc_html_e( 'Údržba webu →', 'mndgroup-core' ); ?></a></p>
+	<p>
+		<a href="<?php echo esc_url( mnd_core_maintenance_url() ); ?>"><?php esc_html_e( 'Údržba webu →', 'mndgroup-core' ); ?></a>
+		&nbsp;·&nbsp;
+		<a href="<?php echo esc_url( mnd_core_settings_url() ); ?>"><?php esc_html_e( 'Nastavení', 'mndgroup-core' ); ?></a>
+	</p>
 	<?php
 }

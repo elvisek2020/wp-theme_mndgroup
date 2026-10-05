@@ -287,6 +287,7 @@ function mnd_core_maintenance_page() {
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Údržba webu', 'mndgroup-core' ); ?></h1>
+		<p><a href="<?php echo esc_url( mnd_core_settings_url() ); ?>"><?php esc_html_e( 'Nastavení funkcí pluginu MND Group Core →', 'mndgroup-core' ); ?></a></p>
 
 		<?php if ( 'unlock' === $done ) : ?>
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Všechny blokace přihlášení byly zrušeny.', 'mndgroup-core' ); ?></p></div>
@@ -353,8 +354,15 @@ function mnd_core_maintenance_page() {
 		<p>
 			<?php
 			$lockouts = mnd_core_active_lockouts();
-			/* translators: 1: attempts, 2: number of blocked IP addresses. */
-			echo esc_html( sprintf( __( 'Po %1$d neúspěšných pokusech se IP adresa dočasně zablokuje. Aktuálně zablokováno: %2$d.', 'mndgroup-core' ), MND_CORE_LOGIN_ATTEMPTS, $lockouts ) );
+			if ( mnd_core_on( 'login_protection' ) ) {
+				/* translators: 1: attempts, 2: number of blocked IP addresses. */
+				echo esc_html( sprintf( __( 'Po %1$d neúspěšných pokusech se IP adresa dočasně zablokuje. Aktuálně zablokováno: %2$d.', 'mndgroup-core' ), mnd_core_login_attempts(), $lockouts ) );
+			} else {
+				esc_html_e( 'Omezení pokusů o přihlášení je vypnuté (Nastavení → MND Group Core).', 'mndgroup-core' );
+			}
+			if ( ! mnd_core_on( 'login_log' ) ) {
+				echo ' ' . esc_html__( 'Log přihlášení je vypnutý – níže jsou jen starší záznamy.', 'mndgroup-core' );
+			}
 			?>
 		</p>
 		<?php if ( $lockouts ) : ?>

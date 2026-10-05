@@ -1,6 +1,6 @@
 <?php
 /**
- * Bezpečnostní hlavičky a sitemap bez uživatelů.
+ * Bezpečnostní hlavičky a sitemap bez uživatelů (zapíná se v Nastavení → MND Group Core).
  *
  * @package MNDGroupCore
  */
@@ -17,7 +17,9 @@ defined( 'ABSPATH' ) || exit;
 function mnd_core_sitemap_providers( $provider, $name ) {
 	return 'users' === $name ? false : $provider;
 }
-add_filter( 'wp_sitemaps_add_provider', 'mnd_core_sitemap_providers', 10, 2 );
+if ( mnd_core_on( 'sitemap_no_users' ) ) {
+	add_filter( 'wp_sitemaps_add_provider', 'mnd_core_sitemap_providers', 10, 2 );
+}
 
 /**
  * Bezpečnostní hlavičky na webu. Administrace a přihlášení posílají X-Frame-Options samy.
@@ -34,7 +36,7 @@ function mnd_core_security_headers() {
 		'Referrer-Policy'        => 'strict-origin-when-cross-origin',
 		'Permissions-Policy'     => 'camera=(), microphone=(), geolocation=(), payment=(), browsing-topics=()',
 	);
-	if ( is_ssl() ) {
+	if ( is_ssl() && mnd_core_on( 'hsts' ) ) {
 		$headers['Strict-Transport-Security'] = 'max-age=31536000';
 	}
 
@@ -44,4 +46,6 @@ function mnd_core_security_headers() {
 		}
 	}
 }
-add_action( 'send_headers', 'mnd_core_security_headers' );
+if ( mnd_core_on( 'security_headers' ) ) {
+	add_action( 'send_headers', 'mnd_core_security_headers' );
+}

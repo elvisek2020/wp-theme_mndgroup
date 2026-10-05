@@ -2,12 +2,15 @@
 
 ## Nevydáno
 
-## 2.1.1 — 2026-10-05
-### Šablona
-- Po přepnutí šablony se z Polylangu převezme přiřazení menu pro všechny jazyky – doplní se i jazyky, které WordPress při přepnutí přes administraci neuložil (na produkci zůstala anglická verze bez dlaždic)
-
+## 2.2.0 — 2026-10-05
 ### MND Group Core
-- Beze změn (verze sjednocená se šablonou)
+- **Nastavení → MND Group Core**: každou funkci jde zapnout a vypnout – omezení pokusů o přihlášení (počet pokusů, délka blokace), log přihlášení, XML-RPC, editor souborů, skrytí uživatelských jmen a verze WordPressu, bezpečnostní hlavičky, HSTS, sitemap bez uživatelů, komentáře, info o serveru v patičce, widget Zdraví webu
+- Automatické aktualizace podle nastavení: WordPress všechny verze / jen opravné / vypnuto, pluginy a šablony všechny / podle volby u jednotlivých položek; šablona a plugin MND vždy ručně
+- Odebrána zjednodušená administrace (skrývání položek menu a úklid Nástěnky) – menu je zase úplné
+- Výchozí nastavení odpovídá verzi 2.1, aktualizace na webu nic nemění; odkaz Nastavení v přehledu pluginů, v Údržbě webu a ve widgetu
+
+### Šablona
+- Po přepnutí šablony se z Polylangu převezme přiřazení menu pro všechny jazyky – doplní se i jazyky, které WordPress při přepnutí přes administraci neuložil (anglická verze byla bez dlaždic)
 
 ## 2.1.0 — 2026-10-05
 ### Šablona
