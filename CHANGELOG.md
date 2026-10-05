@@ -2,6 +2,13 @@
 
 ## Nevydáno
 
+## 2.1.1 — 2026-10-05
+### Šablona
+- Po přepnutí šablony se z Polylangu převezme přiřazení menu pro všechny jazyky – doplní se i jazyky, které WordPress při přepnutí přes administraci neuložil (na produkci zůstala anglická verze bez dlaždic)
+
+### MND Group Core
+- Beze změn (verze sjednocená se šablonou)
+
 ## 2.1.0 — 2026-10-05
 ### Šablona
 - Jednotný prefix: `mnd_` v PHP, `MND_` u konstant, `mnd-` u CSS tříd, proměnných a handlů skriptů – nekoliduje se styly pluginů

@@ -25,7 +25,7 @@ function mnd_pll_post_types( $post_types, $is_settings ) {
 add_filter( 'pll_get_post_types', 'mnd_pll_post_types', 10, 2 );
 
 /**
- * Po přepnutí šablony převezme přiřazení menu pro jednotlivé jazyky.
+ * Po přepnutí šablony převezme přiřazení menu pro jednotlivé jazyky (doplní chybějící).
  *
  * Polylang si přiřazení menu ukládá zvlášť pro každou šablonu, takže by po
  * aktivaci nové šablony menu „zmizelo“ a muselo se ručně přiřadit znovu.
@@ -43,11 +43,26 @@ function mnd_pll_migrate_menus( $old_name, $old_theme = null ) {
 	$options  = PLL()->options;
 	$menus    = isset( $options['nav_menus'] ) ? (array) $options['nav_menus'] : array();
 
-	if ( empty( $menus[ $old_slug ] ) || ! empty( $menus[ $new_slug ] ) ) {
+	if ( empty( $menus[ $old_slug ] ) || ! is_array( $menus[ $old_slug ] ) ) {
 		return;
 	}
 
-	$menus[ $new_slug ] = $menus[ $old_slug ];
+	// Doplnit chybějící nebo prázdná přiřazení po jazycích. WordPress při přepnutí šablony
+	// (i přes administraci) někdy stihne uložit jen menu aktuálního jazyka – ostatní by zůstaly prázdné.
+	$new     = isset( $menus[ $new_slug ] ) && is_array( $menus[ $new_slug ] ) ? $menus[ $new_slug ] : array();
+	$changed = false;
+	foreach ( $menus[ $old_slug ] as $location => $languages ) {
+		foreach ( (array) $languages as $lang => $menu_id ) {
+			if ( $menu_id && empty( $new[ $location ][ $lang ] ) ) {
+				$new[ $location ][ $lang ] = (int) $menu_id;
+				$changed                   = true;
+			}
+		}
+	}
+	if ( ! $changed ) {
+		return;
+	}
+	$menus[ $new_slug ] = $new;
 
 	if ( is_object( $options ) && method_exists( $options, 'set' ) ) {
 		// Polylang 3.7+.
@@ -58,7 +73,8 @@ function mnd_pll_migrate_menus( $old_name, $old_theme = null ) {
 		update_option( 'polylang', $raw );
 	}
 }
-add_action( 'after_switch_theme', 'mnd_pll_migrate_menus', 10, 2 );
+// Priorita 20 = až po mapování menu, které při přepnutí šablony dělá WordPress.
+add_action( 'after_switch_theme', 'mnd_pll_migrate_menus', 20, 2 );
 
 /**
  * Jazyky pro přepínač: [ ['slug','name','url','current','lang'], ... ].
