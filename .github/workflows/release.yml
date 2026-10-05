@@ -1,0 +1,54 @@
+# Vydání nové verze: zvyšte Version ve style.css, commitněte a pushněte tag vX.Y.Z.
+# Workflow šablonu zkontroluje, zabalí (mndgroup.zip se složkou mndgroup/) a vytvoří
+# vydání se souborem update.json, ze kterého si weby se šablonou berou aktualizace.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Verze v tagu odpovídá style.css
+        run: |
+          theme_version=$(sed -n 's/^Version:[[:space:]]*//p' style.css | tr -d '\r')
+          if [ "${GITHUB_REF_NAME#v}" != "$theme_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME nesouhlasí s verzí ve style.css ($theme_version)"
+            exit 1
+          fi
+          echo "VERSION=$theme_version" >> "$GITHUB_ENV"
+          echo "REQUIRES=$(sed -n 's/^Requires at least:[[:space:]]*//p' style.css | tr -d '\r')" >> "$GITHUB_ENV"
+          echo "REQUIRES_PHP=$(sed -n 's/^Requires PHP:[[:space:]]*//p' style.css | tr -d '\r')" >> "$GITHUB_ENV"
+
+      - name: Balíček šablony
+        run: |
+          git archive --format=zip --prefix=mndgroup/ -o mndgroup.zip HEAD
+          unzip -l mndgroup.zip | grep -q ' mndgroup/style.css$'
+
+      - name: update.json
+        run: |
+          base="https://github.com/${GITHUB_REPOSITORY}/releases"
+          jq -n \
+            --arg version "$VERSION" \
+            --arg package "$base/download/v$VERSION/mndgroup.zip" \
+            --arg url "$base/tag/v$VERSION" \
+            --arg requires "$REQUIRES" \
+            --arg requires_php "$REQUIRES_PHP" \
+            '{version: $version, package: $package, url: $url, requires: $requires, requires_php: $requires_php}' > update.json
+          cat update.json
+
+      - name: Vydání na GitHubu
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" mndgroup.zip update.json --title "MND Group $VERSION" --generate-notes --latest
