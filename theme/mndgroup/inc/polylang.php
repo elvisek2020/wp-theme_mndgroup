@@ -16,13 +16,13 @@ defined( 'ABSPATH' ) || exit;
  * @param bool     $is_settings Volání z nastavení Polylangu.
  * @return string[]
  */
-function mndgroup_pll_post_types( $post_types, $is_settings ) {
+function mnd_pll_post_types( $post_types, $is_settings ) {
 	if ( ! $is_settings ) {
 		$post_types['slide'] = 'slide';
 	}
 	return $post_types;
 }
-add_filter( 'pll_get_post_types', 'mndgroup_pll_post_types', 10, 2 );
+add_filter( 'pll_get_post_types', 'mnd_pll_post_types', 10, 2 );
 
 /**
  * Po přepnutí šablony převezme přiřazení menu pro jednotlivé jazyky.
@@ -33,7 +33,7 @@ add_filter( 'pll_get_post_types', 'mndgroup_pll_post_types', 10, 2 );
  * @param string   $old_name  Název předchozí šablony.
  * @param WP_Theme $old_theme Předchozí šablona.
  */
-function mndgroup_pll_migrate_menus( $old_name, $old_theme = null ) {
+function mnd_pll_migrate_menus( $old_name, $old_theme = null ) {
 	if ( ! function_exists( 'PLL' ) || ! $old_theme instanceof WP_Theme ) {
 		return;
 	}
@@ -58,14 +58,14 @@ function mndgroup_pll_migrate_menus( $old_name, $old_theme = null ) {
 		update_option( 'polylang', $raw );
 	}
 }
-add_action( 'after_switch_theme', 'mndgroup_pll_migrate_menus', 10, 2 );
+add_action( 'after_switch_theme', 'mnd_pll_migrate_menus', 10, 2 );
 
 /**
  * Jazyky pro přepínač: [ ['slug','name','url','current','lang'], ... ].
  *
  * @return array
  */
-function mndgroup_languages() {
+function mnd_languages() {
 	if ( ! function_exists( 'pll_the_languages' ) ) {
 		return array();
 	}

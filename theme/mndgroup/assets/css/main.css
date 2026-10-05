@@ -1,18 +1,44 @@
-/*
- * MND Group – styly šablony
- *
- * Proměnné (barvy, rozměry) jsou v tokens.css, tisk v print.css.
- *
- * 1. Základ
- * 2. Přístupnost
- * 3. Hlavička a přepínač jazyků
- * 4. Bannery (hero)
- * 5. Dlaždice oblastí podnikání
- * 6. Obsah
- * 7. Patička
- * 8. Třídy WordPressu
- * 9. Omezení pohybu
- */
+/* ==========================================================================
+   MND Group — hlavní styly
+   Tokeny: --mnd-*  | písmo Montserrat se načítá z theme.json (fontFace)
+   Tisk je v print.css, styly editoru v editor.css.
+
+   1. Základ
+   2. Přístupnost
+   3. Hlavička a přepínač jazyků
+   4. Bannery (hero)
+   5. Dlaždice oblastí podnikání
+   6. Obsah
+   7. Patička
+   8. Třídy WordPressu
+   9. Omezení pohybu
+   ========================================================================== */
+
+:root {
+	--mnd-green: #8bb700;
+	--mnd-green-text: #4f6b00;   /* zelená pro text na světlém pozadí (kontrast 5 : 1) */
+	--mnd-tile: #525455;         /* dlaždice – o odstín tmavší než původní #585a5b kvůli kontrastu zeleného textu */
+	--mnd-tile-hover: #3b3c3d;
+	--mnd-bg: #e7e9ea;
+	--mnd-text: #404040;
+	--mnd-muted: #56595b;
+	--mnd-icon: #c6c6c5;
+	--mnd-white: #fff;
+
+	--mnd-font: var(--wp--preset--font-family--body, "Montserrat", system-ui, sans-serif);
+	--mnd-container: 1170px;
+	--mnd-gutter: clamp(1rem, 3.5vw, 2rem);
+	--mnd-header-h: 96px;
+	--mnd-focus: var(--mnd-green-text);
+	--mnd-ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+@media (min-width: 48em) {
+	:root {
+		--mnd-header-h: 120px;
+	}
+}
+
 
 /* 1. Základ
    ========================================================================== */

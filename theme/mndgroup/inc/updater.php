@@ -1,130 +1,138 @@
 <?php
 /**
- * Aktualizace šablony z GitHubu.
+ * Aktualizace šablony z GitHub Releases (bez pluginu).
  *
- * Hlavička „Update URI“ ve style.css říká WordPressu, že šablona není
- * z WordPress.org. Při kontrole aktualizací (2× denně nebo tlačítkem
- * „Zkontrolovat znovu“) se proto zeptá tohoto filtru a ten přečte soubor
- * update.json z posledního vydání v repozitáři. Vydání vytváří GitHub
- * Actions po pushnutí tagu vX.Y.Z (viz .github/workflows/release.yml).
+ * Jak to funguje: WordPress se při běžné kontrole aktualizací (2× denně / v adminu)
+ * zeptá GitHubu na poslední Release repozitáře. Když je jeho tag vyšší než Version
+ * ve style.css a Release obsahuje soubor mndgroup.zip, nabídne se aktualizace
+ * v Nástěnka → Aktualizace jako u každé jiné šablony (instaluje se kliknutím).
+ *
+ * Soukromé repo: do wp-config.php přidat define( 'MND_GITHUB_TOKEN', 'github_pat_…' ); (jen čtení obsahu).
+ * Na lokálním vývoji je vypnuto (pro test define( 'MND_UPDATER_ON_LOCAL', true )).
  *
  * @package MNDGroup
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MNDGROUP_REPO', 'elvisek2020/wp-theme_mndgroup' );
-define( 'MNDGROUP_UPDATE_JSON', 'https://github.com/' . MNDGROUP_REPO . '/releases/latest/download/update.json' );
+const MND_UPDATE_REPO  = 'elvisek2020/wp-theme_mndgroup';
+const MND_UPDATE_ASSET = 'mndgroup.zip';
+const MND_UPDATE_CACHE = 'mnd_theme_release';
 
-/**
- * Na lokálním vývoji se aktualizace nehledají – šablona je tam připojená přímo z repozitáře
- * a aktualizace by ji přepsala. Pro test updateru lze v wp-config.php nastavit
- * define( 'MNDGROUP_UPDATER_ON_LOCAL', true ).
- *
- * @return bool
- */
-function mndgroup_updater_enabled() {
-	return 'local' !== wp_get_environment_type() || ( defined( 'MNDGROUP_UPDATER_ON_LOCAL' ) && MNDGROUP_UPDATER_ON_LOCAL );
+if ( 'local' === wp_get_environment_type() && ! ( defined( 'MND_UPDATER_ON_LOCAL' ) && MND_UPDATER_ON_LOCAL ) ) {
+	return;
 }
 
 /**
- * Informace o posledním vydání (s cache, aby se GitHub nevolal při každém načtení).
+ * Poslední release z GitHubu (cache: úspěch 6 h, chyba 1 h).
  *
- * @param bool $force Načíst znovu bez cache.
- * @return array|null [version, package, url, requires, requires_php] nebo null.
+ * @return array|null [version, url, package]
  */
-function mndgroup_latest_release( $force = false ) {
-	$cached = $force ? false : get_site_transient( 'mndgroup_release' );
-	if ( false !== $cached ) {
-		return is_array( $cached ) ? $cached : null;
+function mnd_update_latest_release() {
+	$cached = get_site_transient( MND_UPDATE_CACHE );
+	if ( is_array( $cached ) ) {
+		return $cached ? $cached : null;
 	}
 
-	$release  = null;
 	$response = wp_remote_get(
-		MNDGROUP_UPDATE_JSON,
+		'https://api.github.com/repos/' . MND_UPDATE_REPO . '/releases/latest',
 		array(
 			'timeout' => 10,
-			'headers' => array( 'Accept' => 'application/json' ),
+			'headers' => mnd_update_headers( 'application/vnd.github+json' ),
 		)
 	);
 
+	$release = array();
 	if ( ! is_wp_error( $response ) && 200 === (int) wp_remote_retrieve_response_code( $response ) ) {
-		$data    = json_decode( wp_remote_retrieve_body( $response ), true );
-		$package = isset( $data['package'] ) ? (string) $data['package'] : '';
-
-		// Balíček se smí stahovat jen z vydání tohoto repozitáře.
-		if (
-			isset( $data['version'] )
-			&& preg_match( '/^\d+(\.\d+){0,3}$/', (string) $data['version'] )
-			&& 0 === strpos( $package, 'https://github.com/' . MNDGROUP_REPO . '/releases/download/' )
-		) {
-			$release = array(
-				'version'      => (string) $data['version'],
-				'package'      => $package,
-				'url'          => isset( $data['url'] ) ? esc_url_raw( $data['url'] ) : 'https://github.com/' . MNDGROUP_REPO . '/releases',
-				'requires'     => isset( $data['requires'] ) ? (string) $data['requires'] : '',
-				'requires_php' => isset( $data['requires_php'] ) ? (string) $data['requires_php'] : '',
-			);
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		foreach ( (array) ( isset( $data['assets'] ) ? $data['assets'] : array() ) as $asset ) {
+			if ( isset( $asset['name'] ) && MND_UPDATE_ASSET === $asset['name'] ) {
+				$release = array(
+					'version' => ltrim( (string) $data['tag_name'], 'vV' ),
+					'url'     => (string) $data['html_url'],
+					// Soukromé repo stahuje přes API URL assetu, veřejné přes přímý odkaz.
+					'package' => defined( 'MND_GITHUB_TOKEN' ) ? (string) $asset['url'] : (string) $asset['browser_download_url'],
+				);
+				break;
+			}
 		}
 	}
 
-	// Úspěch si pamatujeme 6 hodin, chybu (výpadek, limit GitHubu) jen hodinu.
-	set_site_transient( 'mndgroup_release', $release ? $release : 0, $release ? 6 * HOUR_IN_SECONDS : HOUR_IN_SECONDS );
-
-	return $release;
+	set_site_transient( MND_UPDATE_CACHE, $release, $release ? 6 * HOUR_IN_SECONDS : HOUR_IN_SECONDS );
+	return $release ? $release : null;
 }
 
 /**
- * Odpověď pro kontrolu aktualizací WordPressu (filtr update_themes_{hostname}, WP 6.1+).
+ * Hlavičky pro GitHub API.
  *
- * @param array|false $update           Data aktualizace.
- * @param array       $theme_data       Hlavičky šablony.
- * @param string      $theme_stylesheet Složka šablony.
- * @return array|false
+ * @param string $accept Hlavička Accept.
+ * @return array
  */
-function mndgroup_check_update( $update, $theme_data, $theme_stylesheet ) {
-	if ( basename( MNDGROUP_DIR ) !== $theme_stylesheet || ! mndgroup_updater_enabled() ) {
-		return $update;
+function mnd_update_headers( $accept ) {
+	$headers = array(
+		'Accept'     => $accept,
+		'User-Agent' => 'mndgroup-theme-updater',
+	);
+	if ( defined( 'MND_GITHUB_TOKEN' ) && MND_GITHUB_TOKEN ) {
+		$headers['Authorization'] = 'Bearer ' . MND_GITHUB_TOKEN;
 	}
+	return $headers;
+}
 
-	// „Zkontrolovat znovu“ v Nástěnka → Aktualizace obejde cache.
-	$force   = ! empty( $_GET['force-check'] ) && current_user_can( 'update_themes' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$release = mndgroup_latest_release( $force );
-	if ( ! $release ) {
-		return $update;
+/**
+ * Nabídnout aktualizaci.
+ *
+ * @param object $transient Data aktualizací šablon.
+ * @return object
+ */
+function mnd_update_offer( $transient ) {
+	if ( empty( $transient->checked ) ) {
+		return $transient;
 	}
-
-	return array(
-		'theme'        => $theme_stylesheet,
-		'version'      => $release['version'],
+	$slug    = basename( MND_DIR );
+	$theme   = wp_get_theme( $slug );
+	$release = mnd_update_latest_release();
+	if ( ! $release || ! $theme->exists() ) {
+		return $transient;
+	}
+	$item = array(
+		'theme'        => $slug,
+		'new_version'  => $release['version'],
 		'url'          => $release['url'],
 		'package'      => $release['package'],
-		'requires'     => $release['requires'],
-		'requires_php' => $release['requires_php'],
+		'requires'     => $theme->get( 'RequiresWP' ),
+		'requires_php' => $theme->get( 'RequiresPHP' ),
 	);
+	if ( version_compare( $release['version'], $theme->get( 'Version' ), '>' ) ) {
+		$transient->response[ $slug ] = $item;
+	} else {
+		$transient->no_update[ $slug ] = $item;
+	}
+	return $transient;
 }
-add_filter( 'update_themes_github.com', 'mndgroup_check_update', 10, 3 );
+add_filter( 'pre_set_site_transient_update_themes', 'mnd_update_offer' );
 
 /**
- * Po aktualizaci zapomenout uložené vydání.
- */
-function mndgroup_clear_release_cache() {
-	delete_site_transient( 'mndgroup_release' );
-}
-add_action( 'upgrader_process_complete', 'mndgroup_clear_release_cache' );
-
-/**
- * Po aktivaci zapnout automatické aktualizace šablony.
+ * Soukromé repo: stažení assetu přes API potřebuje token a Accept: octet-stream.
  *
- * Jde o běžné nastavení WordPressu – vypnout se dá ve Vzhled → Šablony →
- * detail šablony → „Zakázat automatické aktualizace“.
+ * @param array  $args Parametry požadavku.
+ * @param string $url  Adresa.
+ * @return array
  */
-function mndgroup_enable_auto_updates() {
-	$auto = (array) get_site_option( 'auto_update_themes', array() );
-	$slug = get_stylesheet();
-	if ( ! in_array( $slug, $auto, true ) ) {
-		$auto[] = $slug;
-		update_site_option( 'auto_update_themes', $auto );
+function mnd_update_download_args( $args, $url ) {
+	if ( defined( 'MND_GITHUB_TOKEN' ) && 0 === strpos( $url, 'https://api.github.com/repos/' . MND_UPDATE_REPO . '/releases/assets/' ) ) {
+		$args['headers'] = array_merge( (array) ( isset( $args['headers'] ) ? $args['headers'] : array() ), mnd_update_headers( 'application/octet-stream' ) );
+	}
+	return $args;
+}
+add_filter( 'http_request_args', 'mnd_update_download_args', 10, 2 );
+
+/**
+ * Tlačítko „Zkontrolovat znovu“ v Aktualizacích smaže i naši cache.
+ */
+function mnd_update_force_check() {
+	if ( isset( $_GET['force-check'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		delete_site_transient( MND_UPDATE_CACHE );
 	}
 }
-add_action( 'after_switch_theme', 'mndgroup_enable_auto_updates' );
+add_action( 'load-update-core.php', 'mnd_update_force_check' );

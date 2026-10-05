@@ -1,47 +1,53 @@
-# Lokální kopie www.mndgroup.eu pro vývoj šablony a pluginu.
-# Poprvé: ./setup.sh <záloha souborů> <dump.sql>   →   http://localhost:8321
-# Šablona i plugin se připojují přímo z repozitáře – změny se projeví hned.
-name: mndgroup-local
+name: mndgroup-dev
 
 services:
   db:
     image: mariadb:10.11
+    restart: unless-stopped
     environment:
       MARIADB_DATABASE: mndgroup
-      MARIADB_USER: mndgroup
-      MARIADB_PASSWORD: mndgroup
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp
       MARIADB_ROOT_PASSWORD: root
     volumes:
-      - db:/var/lib/mysql
+      - db-data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
-      retries: 20
+      timeout: 5s
+      retries: 60
 
   wp:
-    image: wordpress:php8.3-apache
+    image: wordpress:php8.5-apache
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "8321:80"
+      - "8321:80"    # http://localhost:8321 (8080 a 80 používá lokální elvisek)
     volumes:
       - ./wp:/var/www/html
+      - ./wp-config.php:/var/www/html/wp-config.php:ro
       - ../theme/mndgroup:/var/www/html/wp-content/themes/mndgroup
+      - ../mu-plugins:/var/www/html/wp-content/mu-plugins
       - ../plugins/mndgroup-core:/var/www/html/wp-content/plugins/mndgroup-core
 
   cli:
-    image: wordpress:cli-php8.3
+    image: wordpress:cli-php8.5
     profiles: ["cli"]
     user: "33:33"
     environment:
       HOME: /tmp
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./wp:/var/www/html
+      - ./wp-config.php:/var/www/html/wp-config.php:ro
       - ../theme/mndgroup:/var/www/html/wp-content/themes/mndgroup
+      - ../mu-plugins:/var/www/html/wp-content/mu-plugins
       - ../plugins/mndgroup-core:/var/www/html/wp-content/plugins/mndgroup-core
 
 volumes:
-  db:
+  db-data:

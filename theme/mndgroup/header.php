@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 <header class="mnd-header">
 	<div class="mnd-header__inner">
-		<?php mndgroup_site_logo(); ?>
-		<?php mndgroup_language_switcher(); ?>
+		<?php mnd_site_logo(); ?>
+		<?php mnd_language_switcher(); ?>
 	</div>
 </header>

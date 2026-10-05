@@ -1,34 +1,30 @@
 <?php
 /**
- * MND Group – funkce šablony.
+ * MND Group — šablona pro www.mndgroup.eu
  *
- * Funkce jsou rozdělené do modulů v inc/. Modul se vypne zakomentováním
- * řádku v seznamu níže. Bezpečnost, administrace a údržba jsou v pluginu
- * mndgroup-core (aby přežily případnou výměnu šablony).
- *
- * @package MNDGroup
+ * Každý modul v inc/ jde vypnout zakomentováním řádku níže.
+ * Bezpečnost, administrace a údržba jsou v pluginu MND Group Core (plugins/mndgroup-core).
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MNDGROUP_DIR', get_template_directory() );
-define( 'MNDGROUP_URI', get_template_directory_uri() );
-define( 'MNDGROUP_VERSION', (string) wp_get_theme( get_template() )->get( 'Version' ) ); // jediný zdroj verze je style.css
+define( 'MND_VERSION', (string) wp_get_theme( get_template() )->get( 'Version' ) );
+define( 'MND_DIR', get_template_directory() );
+define( 'MND_URI', get_template_directory_uri() );
 
-$mndgroup_modules = array(
-	'setup',         // podpora funkcí WordPressu, menu, widgety, úklid widgetů po aktivaci
-	'assets',        // CSS/JS, přednačtení písem, Google Analytics (volitelně)
-	'cleanup',       // emoji, zbytečné odkazy v hlavičce
+$mnd_modules = array(
+	'setup',         // podpora šablony, menu, widgety, úklid widgetů po aktivaci
+	'customizer',    // Vzhled → Přizpůsobit → MND Group (bannery, logo KKCG, GA4 ID)
+	'assets',        // CSS/JS, přednačtení písem, Google Analytics (jen s vyplněným ID)
+	'cleanup',       // emoji, zbytečné odkazy v <head>
+	'template-tags', // logo, přepínač jazyků, copyright
 	'post-types',    // typ obsahu „slide“ – bannery
 	'navigation',    // dlaždice: ikony a rozbalovací tlačítka
-	'customizer',    // Vzhled → Přizpůsobit → MND Group
-	'template-tags', // logo, přepínač jazyků, copyright
 	'polylang',      // překládané slidy, převzetí menu po aktivaci
-	'updater',       // aktualizace šablony z GitHub Releases
-	'plugin-check',  // upozornění, když chybí plugin mndgroup-core
+	'updater',       // aktualizace z GitHub Releases
+	'plugin-check',  // upozornění, když chybí plugin MND Group Core
 );
 
-foreach ( $mndgroup_modules as $mndgroup_module ) {
-	require MNDGROUP_DIR . '/inc/' . $mndgroup_module . '.php';
+foreach ( $mnd_modules as $mnd_module ) {
+	require MND_DIR . '/inc/' . $mnd_module . '.php';
 }
-unset( $mndgroup_modules, $mndgroup_module );

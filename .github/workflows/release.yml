@@ -1,7 +1,6 @@
-# Vydání: zvýšit verzi v theme/mndgroup/style.css i plugins/mndgroup-core/mndgroup-core.php,
-# commit, pak tag vX.Y.Z. Workflow zkontroluje kód, sestaví mndgroup.zip a mndgroup-core.zip
-# a vytvoří vydání se souborem update.json, ze kterého si weby berou aktualizace.
-name: Release
+# Po pushnutí tagu vX.Y.Z sestaví mndgroup.zip (šablona) + mndgroup-core.zip (plugin) a vytvoří GitHub Release.
+# WordPress (theme/mndgroup/inc/updater.php, plugins/mndgroup-core/inc/core.php) si pak aktualizaci najde sám.
+name: Release šablony
 
 on:
   push:
@@ -11,46 +10,40 @@ permissions:
   contents: write
 
 jobs:
-  lint:
-    uses: ./.github/workflows/ci.yml
-
   release:
-    needs: lint
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04  # pevně: ubuntu-latest se od 19. 10. 2026 přepne na Ubuntu 26 (jiné PHP); přechod udělat vědomě
     steps:
       - uses: actions/checkout@v5
 
-      - name: Tag = verze šablony i pluginu
+      - name: Kontrola verze (tag = Version šablony i pluginu)
         run: |
-          tag="${GITHUB_REF_NAME#v}"
-          theme=$(grep -m1 -E '^Version:' theme/mndgroup/style.css | awk '{print $2}' | tr -d '\r')
-          core=$(grep -m1 -E '^ \* Version:' plugins/mndgroup-core/mndgroup-core.php | awk '{print $3}' | tr -d '\r')
-          [ "$tag" = "$theme" ] && [ "$tag" = "$core" ] || { echo "::error::Tag v$tag ≠ šablona $theme / plugin $core"; exit 1; }
-          echo "VERSION=$tag" >> "$GITHUB_ENV"
-          echo "REQUIRES=$(sed -n 's/^Requires at least:[[:space:]]*//p' theme/mndgroup/style.css | tr -d '\r')" >> "$GITHUB_ENV"
-          echo "REQUIRES_PHP=$(sed -n 's/^Requires PHP:[[:space:]]*//p' theme/mndgroup/style.css | tr -d '\r')" >> "$GITHUB_ENV"
+          TAG="${GITHUB_REF_NAME#v}"
+          THEME=$(grep -m1 -E '^Version:' theme/mndgroup/style.css | awk '{print $2}')
+          CORE=$(grep -m1 -E '^ \* Version:' plugins/mndgroup-core/mndgroup-core.php | awk '{print $3}')
+          echo "tag=$TAG theme=$THEME core=$CORE"
+          if [ "$TAG" != "$THEME" ] || [ "$TAG" != "$CORE" ]; then
+            echo "::error::Tag v$TAG musí odpovídat Version ve style.css ($THEME) i v mndgroup-core.php ($CORE)"; exit 1
+          fi
 
-      - name: Balíčky
+      - name: Kontrola syntaxe PHP
+        run: find theme/mndgroup plugins/mndgroup-core -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Kontrola syntaxe PHP 7.4 (minimální verze v hlavičkách)
+        run: docker run --rm -v "$PWD":/app -w /app php:7.4-cli sh -c "find theme/mndgroup plugins/mndgroup-core -name '*.php' -print0 | xargs -0 -n1 php -l"
+
+      - name: Kontrola syntaxe JS
+        run: find theme/mndgroup/assets/js -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Sestavení ZIPů
         run: |
-          (cd theme && zip -rq ../mndgroup.zip mndgroup -x '*/.DS_Store')
+          (cd theme && zip -rq ../mndgroup.zip mndgroup -x '*/.DS_Store' -x 'mndgroup/README.md')
           (cd plugins && zip -rq ../mndgroup-core.zip mndgroup-core -x '*/.DS_Store')
-          unzip -l mndgroup.zip | grep -q ' mndgroup/style.css$'
-          unzip -l mndgroup-core.zip | grep -q ' mndgroup-core/mndgroup-core.php$'
+          unzip -l mndgroup.zip | tail -1; unzip -l mndgroup-core.zip | tail -1
 
-      - name: update.json
-        run: |
-          base="https://github.com/${GITHUB_REPOSITORY}/releases"
-          jq -n \
-            --arg version "$VERSION" \
-            --arg url "$base/tag/v$VERSION" \
-            --arg requires "$REQUIRES" \
-            --arg requires_php "$REQUIRES_PHP" \
-            --arg theme "$base/download/v$VERSION/mndgroup.zip" \
-            --arg plugin "$base/download/v$VERSION/mndgroup-core.zip" \
-            '{version: $version, url: $url, requires: $requires, requires_php: $requires_php, package: $theme, plugin: {slug: "mndgroup-core", package: $plugin}}' > update.json
-          cat update.json
-
-      - name: Vydání na GitHubu
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" mndgroup.zip mndgroup-core.zip update.json --title "MND Group $VERSION" --generate-notes --latest
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            mndgroup.zip
+            mndgroup-core.zip
+          generate_release_notes: true

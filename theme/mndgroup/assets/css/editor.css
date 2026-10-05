@@ -1,31 +1,9 @@
-/* Vzhled obsahu v editoru (klasický TinyMCE i blokový editor) odpovídá webu.
-   Proměnné jsou v tokens.css, který se do editoru načítá spolu s tímto souborem. */
-body,
-.editor-styles-wrapper {
-	color: var(--mnd-text);
-	font-family: var(--mnd-font);
-	font-size: 16px;
-	line-height: 1.8;
+/* Styly v editoru — aby obsah vypadal jako na webu. Písmo načítá WordPress z theme.json. */
+:root, body {
+	--mnd-green: #8bb700; --mnd-green-text: #4f6b00; --mnd-tile-hover: #3b3c3d; --mnd-bg: #e7e9ea;
+	--mnd-text: #404040; --mnd-muted: #56595b; --mnd-white: #fff;
 }
-
-body {
-	max-width: var(--mnd-container);
-	margin: 1rem auto;
-	padding: 0 1rem;
-	background: var(--mnd-bg);
-}
-
-h1, h2, h3, h4, h5, h6 {
-	color: var(--mnd-tile-hover);
-	line-height: 1.25;
-}
-
-a {
-	color: var(--mnd-green-text);
-}
-
-blockquote {
-	margin: 1.5em 0;
-	padding-left: 1.25em;
-	border-left: 4px solid var(--mnd-green);
-}
+body { font-family: var(--wp--preset--font-family--body); font-size: 16px; line-height: 1.8; color: var(--mnd-text); }
+h1, h2, h3, h4, h5, h6 { color: var(--mnd-tile-hover); line-height: 1.25; }
+a { color: var(--mnd-green-text); }
+blockquote { margin: 1.5em 0; padding-left: 1.25em; border-left: 4px solid var(--mnd-green); }

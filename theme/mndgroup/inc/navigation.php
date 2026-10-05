@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @return string[]
  */
-function mndgroup_segment_icons() {
+function mnd_segment_icons() {
 	return array( 'oil', 'drill', 'gas', 'fire', 'arrows' );
 }
 
@@ -26,7 +26,7 @@ function mndgroup_segment_icons() {
  * @param stdClass|array $args Argumenty wp_nav_menu().
  * @return bool
  */
-function mndgroup_is_segments_menu( $args ) {
+function mnd_is_segments_menu( $args ) {
 	$args = (object) $args;
 	return isset( $args->theme_location ) && 'primary' === $args->theme_location;
 }
@@ -37,10 +37,10 @@ function mndgroup_is_segments_menu( $args ) {
  * @param string $name Název souboru bez přípony (např. „icons/oil“).
  * @return string
  */
-function mndgroup_svg( $name ) {
+function mnd_svg( $name ) {
 	static $cache = array();
 	if ( ! isset( $cache[ $name ] ) ) {
-		$file           = MNDGROUP_DIR . '/assets/img/' . $name . '.svg';
+		$file           = MND_DIR . '/assets/img/' . $name . '.svg';
 		$cache[ $name ] = file_exists( $file ) ? trim( (string) file_get_contents( $file ) ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 	}
 	return $cache[ $name ];
@@ -51,7 +51,7 @@ function mndgroup_svg( $name ) {
  *
  * @return string
  */
-function mndgroup_chevron() {
+function mnd_chevron() {
 	return '<svg class="mnd-chevron" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
@@ -62,8 +62,8 @@ function mndgroup_chevron() {
  * @param stdClass  $args  Argumenty menu.
  * @return WP_Post[]
  */
-function mndgroup_nav_menu_objects( $items, $args ) {
-	if ( ! mndgroup_is_segments_menu( $args ) ) {
+function mnd_nav_menu_objects( $items, $args ) {
+	if ( ! mnd_is_segments_menu( $args ) ) {
 		return $items;
 	}
 
@@ -76,14 +76,14 @@ function mndgroup_nav_menu_objects( $items, $args ) {
 
 	$index = 0;
 	foreach ( $items as $item ) {
-		$item->mndgroup_has_children = isset( $parents[ (int) $item->ID ] );
+		$item->mnd_has_children = isset( $parents[ (int) $item->ID ] );
 		if ( ! (int) $item->menu_item_parent ) {
-			$item->mndgroup_index = $index++;
+			$item->mnd_index = $index++;
 		}
 	}
 	return $items;
 }
-add_filter( 'wp_nav_menu_objects', 'mndgroup_nav_menu_objects', 10, 2 );
+add_filter( 'wp_nav_menu_objects', 'mnd_nav_menu_objects', 10, 2 );
 
 /**
  * Ikona dlaždice podle CSS třídy položky, jinak podle pořadí.
@@ -91,15 +91,15 @@ add_filter( 'wp_nav_menu_objects', 'mndgroup_nav_menu_objects', 10, 2 );
  * @param WP_Post $item Položka menu.
  * @return string
  */
-function mndgroup_segment_icon( $item ) {
-	$icons = mndgroup_segment_icons();
+function mnd_segment_icon( $item ) {
+	$icons = mnd_segment_icons();
 	foreach ( (array) $item->classes as $class ) {
 		if ( 0 === strpos( $class, 'icon-' ) && in_array( substr( $class, 5 ), $icons, true ) ) {
-			return mndgroup_svg( 'icons/' . substr( $class, 5 ) );
+			return mnd_svg( 'icons/' . substr( $class, 5 ) );
 		}
 	}
-	$index = isset( $item->mndgroup_index ) ? (int) $item->mndgroup_index : 0;
-	return mndgroup_svg( 'icons/' . $icons[ $index % count( $icons ) ] );
+	$index = isset( $item->mnd_index ) ? (int) $item->mnd_index : 0;
+	return mnd_svg( 'icons/' . $icons[ $index % count( $icons ) ] );
 }
 
 /**
@@ -111,13 +111,13 @@ function mndgroup_segment_icon( $item ) {
  * @param int      $depth Úroveň zanoření.
  * @return string
  */
-function mndgroup_nav_item_title( $title, $item, $args, $depth ) {
-	if ( ! mndgroup_is_segments_menu( $args ) || $depth > 0 ) {
+function mnd_nav_item_title( $title, $item, $args, $depth ) {
+	if ( ! mnd_is_segments_menu( $args ) || $depth > 0 ) {
 		return $title;
 	}
-	return '<span class="mnd-segments__icon">' . mndgroup_segment_icon( $item ) . '</span><span class="mnd-segments__label">' . $title . '</span>';
+	return '<span class="mnd-segments__icon">' . mnd_segment_icon( $item ) . '</span><span class="mnd-segments__label">' . $title . '</span>';
 }
-add_filter( 'nav_menu_item_title', 'mndgroup_nav_item_title', 10, 4 );
+add_filter( 'nav_menu_item_title', 'mnd_nav_item_title', 10, 4 );
 
 /**
  * CSS třídy odkazů.
@@ -128,13 +128,13 @@ add_filter( 'nav_menu_item_title', 'mndgroup_nav_item_title', 10, 4 );
  * @param int      $depth Úroveň zanoření.
  * @return array
  */
-function mndgroup_nav_link_attributes( $atts, $item, $args, $depth ) {
-	if ( mndgroup_is_segments_menu( $args ) ) {
+function mnd_nav_link_attributes( $atts, $item, $args, $depth ) {
+	if ( mnd_is_segments_menu( $args ) ) {
 		$atts['class'] = trim( ( isset( $atts['class'] ) ? $atts['class'] : '' ) . ' ' . ( $depth > 0 ? 'mnd-segments__sublink' : 'mnd-segments__link' ) );
 	}
 	return $atts;
 }
-add_filter( 'nav_menu_link_attributes', 'mndgroup_nav_link_attributes', 10, 4 );
+add_filter( 'nav_menu_link_attributes', 'mnd_nav_link_attributes', 10, 4 );
 
 /**
  * CSS třídy položek.
@@ -145,13 +145,13 @@ add_filter( 'nav_menu_link_attributes', 'mndgroup_nav_link_attributes', 10, 4 );
  * @param int      $depth   Úroveň zanoření.
  * @return string[]
  */
-function mndgroup_nav_css_class( $classes, $item, $args, $depth ) {
-	if ( mndgroup_is_segments_menu( $args ) ) {
+function mnd_nav_css_class( $classes, $item, $args, $depth ) {
+	if ( mnd_is_segments_menu( $args ) ) {
 		$classes[] = $depth > 0 ? 'mnd-segments__subitem' : 'mnd-segments__item';
 	}
 	return $classes;
 }
-add_filter( 'nav_menu_css_class', 'mndgroup_nav_css_class', 10, 4 );
+add_filter( 'nav_menu_css_class', 'mnd_nav_css_class', 10, 4 );
 
 /**
  * CSS třída rozbalovacího seznamu.
@@ -160,13 +160,13 @@ add_filter( 'nav_menu_css_class', 'mndgroup_nav_css_class', 10, 4 );
  * @param stdClass $args    Argumenty menu.
  * @return string[]
  */
-function mndgroup_nav_submenu_class( $classes, $args ) {
-	if ( mndgroup_is_segments_menu( $args ) ) {
+function mnd_nav_submenu_class( $classes, $args ) {
+	if ( mnd_is_segments_menu( $args ) ) {
 		$classes[] = 'mnd-segments__submenu';
 	}
 	return $classes;
 }
-add_filter( 'nav_menu_submenu_css_class', 'mndgroup_nav_submenu_class', 10, 2 );
+add_filter( 'nav_menu_submenu_css_class', 'mnd_nav_submenu_class', 10, 2 );
 
 /**
  * Položky s podmenu dostanou tlačítko pro rozbalení.
@@ -180,14 +180,14 @@ add_filter( 'nav_menu_submenu_css_class', 'mndgroup_nav_submenu_class', 10, 2 );
  * @param stdClass $args   Argumenty menu.
  * @return string
  */
-function mndgroup_nav_start_el( $output, $item, $depth, $args ) {
-	if ( ! mndgroup_is_segments_menu( $args ) || $depth > 0 || empty( $item->mndgroup_has_children ) ) {
+function mnd_nav_start_el( $output, $item, $depth, $args ) {
+	if ( ! mnd_is_segments_menu( $args ) || $depth > 0 || empty( $item->mnd_has_children ) ) {
 		return $output;
 	}
 
 	if ( in_array( trim( (string) $item->url ), array( '', '#' ), true ) ) {
 		$output = preg_replace( '/<a\b[^>]*>/', '<button type="button" class="mnd-segments__link mnd-segments__trigger" aria-expanded="false">', $output, 1 );
-		$output = preg_replace( '/<\/a>(?!.*<\/a>)/s', '<span class="mnd-segments__chevron">' . mndgroup_chevron() . '</span></button>', $output, 1 );
+		$output = preg_replace( '/<\/a>(?!.*<\/a>)/s', '<span class="mnd-segments__chevron">' . mnd_chevron() . '</span></button>', $output, 1 );
 		return $output;
 	}
 
@@ -197,7 +197,7 @@ function mndgroup_nav_start_el( $output, $item, $depth, $args ) {
 	return $output . sprintf(
 		'<button type="button" class="mnd-segments__toggle" aria-expanded="false"><span class="screen-reader-text">%s</span>%s</button>',
 		esc_html( $label ),
-		mndgroup_chevron()
+		mnd_chevron()
 	);
 }
-add_filter( 'walker_nav_menu_start_el', 'mndgroup_nav_start_el', 10, 4 );
+add_filter( 'walker_nav_menu_start_el', 'mnd_nav_start_el', 10, 4 );

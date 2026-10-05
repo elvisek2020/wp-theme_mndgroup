@@ -52,6 +52,6 @@ return ['domain'=>'mndgroup','plural-forms'=>'nplurals=3; plural=(n==1) ? 0 : ((
 	'View slide'=>'Zobrazit slide',
 	'carousel'=>'prezentace',
 	'slide'=>'banner',
-	'the companion plugin “MND Group – core” is installed but not active. It provides login protection, security hardening and site maintenance.'=>'doprovodný plugin „MND Group – jádro webu“ je nainstalovaný, ale není aktivní. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu.',
-	'the companion plugin “MND Group – core” is missing. It provides login protection, security hardening and site maintenance.'=>'chybí doprovodný plugin „MND Group – jádro webu“. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu.',
+	'the companion plugin “MND Group Core” is installed but not active. It provides login protection, security hardening and site maintenance.'=>'doprovodný plugin „MND Group Core“ je nainstalovaný, ale není aktivní. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu.',
+	'the companion plugin “MND Group Core” is missing. It provides login protection, security hardening and site maintenance.'=>'chybí doprovodný plugin „MND Group Core“. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu.',
 ]];

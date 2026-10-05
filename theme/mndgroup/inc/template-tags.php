@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Logo webu – vlastní logo z Přizpůsobení, jinak logo MND Group ze šablony.
  */
-function mndgroup_site_logo() {
+function mnd_site_logo() {
 	if ( has_custom_logo() ) {
 		the_custom_logo();
 		return;
@@ -18,7 +18,7 @@ function mndgroup_site_logo() {
 	printf(
 		'<a href="%1$s" class="mnd-logo" rel="home"><img src="%2$s" width="115" height="70" alt="%3$s"></a>',
 		esc_url( function_exists( 'pll_home_url' ) ? pll_home_url() : home_url( '/' ) ),
-		esc_url( MNDGROUP_URI . '/assets/img/logo.svg' ),
+		esc_url( MND_URI . '/assets/img/logo.svg' ),
 		esc_attr( get_bloginfo( 'name', 'display' ) )
 	);
 }
@@ -26,8 +26,8 @@ function mndgroup_site_logo() {
 /**
  * Přepínač jazyků (Polylang).
  */
-function mndgroup_language_switcher() {
-	$languages = mndgroup_languages();
+function mnd_language_switcher() {
+	$languages = mnd_languages();
 	if ( ! $languages ) {
 		return;
 	}
@@ -51,8 +51,8 @@ function mndgroup_language_switcher() {
 /**
  * Text s rokem do patičky.
  */
-function mndgroup_copyright() {
+function mnd_copyright() {
 	/* translators: %s: current year. */
 	$text = sprintf( __( 'Copyright &copy; %s MND', 'mndgroup' ), wp_date( 'Y' ) );
-	echo wp_kses_post( apply_filters( 'mndgroup_copyright', $text ) );
+	echo wp_kses_post( apply_filters( 'mnd_copyright', $text ) );
 }

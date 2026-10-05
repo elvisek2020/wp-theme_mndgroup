@@ -164,8 +164,8 @@ msgstr "prezentace"
 msgid "slide"
 msgstr "banner"
 
-msgid "the companion plugin “MND Group – core” is installed but not active. It provides login protection, security hardening and site maintenance."
-msgstr "doprovodný plugin „MND Group – jádro webu“ je nainstalovaný, ale není aktivní. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu."
+msgid "the companion plugin “MND Group Core” is installed but not active. It provides login protection, security hardening and site maintenance."
+msgstr "doprovodný plugin „MND Group Core“ je nainstalovaný, ale není aktivní. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu."
 
-msgid "the companion plugin “MND Group – core” is missing. It provides login protection, security hardening and site maintenance."
-msgstr "chybí doprovodný plugin „MND Group – jádro webu“. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu."
+msgid "the companion plugin “MND Group Core” is missing. It provides login protection, security hardening and site maintenance."
+msgstr "chybí doprovodný plugin „MND Group Core“. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu."

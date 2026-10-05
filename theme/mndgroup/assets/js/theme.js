@@ -9,7 +9,7 @@
 (function () {
 	'use strict';
 
-	var l10n = window.mndgroupL10n || {
+	var l10n = window.mndL10n || {
 		goTo: 'Show slide %s',
 		pause: 'Pause slideshow',
 		play: 'Play slideshow'

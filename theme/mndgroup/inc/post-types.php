@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Registrace typu obsahu.
  */
-function mndgroup_register_slide() {
+function mnd_register_slide() {
 	register_post_type(
 		'slide',
 		array(
@@ -49,7 +49,7 @@ function mndgroup_register_slide() {
 		)
 	);
 }
-add_action( 'init', 'mndgroup_register_slide' );
+add_action( 'init', 'mnd_register_slide' );
 
 /**
  * V přehledu slidů zobrazit náhled obrázku a pořadí.
@@ -57,11 +57,11 @@ add_action( 'init', 'mndgroup_register_slide' );
  * @param array $columns Sloupce tabulky.
  * @return array
  */
-function mndgroup_slide_columns( $columns ) {
+function mnd_slide_columns( $columns ) {
 	$new = array();
 	foreach ( $columns as $key => $label ) {
 		if ( 'title' === $key ) {
-			$new['mndgroup_thumb'] = __( 'Image', 'mndgroup' );
+			$new['mnd_thumb'] = __( 'Image', 'mndgroup' );
 		}
 		$new[ $key ] = $label;
 		if ( 'title' === $key ) {
@@ -70,7 +70,7 @@ function mndgroup_slide_columns( $columns ) {
 	}
 	return $new;
 }
-add_filter( 'manage_slide_posts_columns', 'mndgroup_slide_columns' );
+add_filter( 'manage_slide_posts_columns', 'mnd_slide_columns' );
 
 /**
  * Obsah vlastních sloupců.
@@ -78,34 +78,34 @@ add_filter( 'manage_slide_posts_columns', 'mndgroup_slide_columns' );
  * @param string $column  Sloupec.
  * @param int    $post_id ID slidu.
  */
-function mndgroup_slide_column_content( $column, $post_id ) {
-	if ( 'mndgroup_thumb' === $column ) {
+function mnd_slide_column_content( $column, $post_id ) {
+	if ( 'mnd_thumb' === $column ) {
 		echo get_the_post_thumbnail( $post_id, array( 160, 40 ), array( 'style' => 'width:160px;height:40px;object-fit:cover' ) );
 	} elseif ( 'menu_order' === $column ) {
 		echo (int) get_post_field( 'menu_order', $post_id );
 	}
 }
-add_action( 'manage_slide_posts_custom_column', 'mndgroup_slide_column_content', 10, 2 );
+add_action( 'manage_slide_posts_custom_column', 'mnd_slide_column_content', 10, 2 );
 
 /**
  * Výchozí řazení slidů v administraci podle pořadí.
  *
  * @param WP_Query $query Dotaz.
  */
-function mndgroup_slide_admin_order( $query ) {
+function mnd_slide_admin_order( $query ) {
 	if ( is_admin() && $query->is_main_query() && 'slide' === $query->get( 'post_type' ) && ! $query->get( 'orderby' ) ) {
 		$query->set( 'orderby', 'menu_order' );
 		$query->set( 'order', 'ASC' );
 	}
 }
-add_action( 'pre_get_posts', 'mndgroup_slide_admin_order' );
+add_action( 'pre_get_posts', 'mnd_slide_admin_order' );
 
 /**
  * Slidy pro aktuální jazyk v nastaveném pořadí.
  *
  * @return WP_Post[]
  */
-function mndgroup_get_slides() {
+function mnd_get_slides() {
 	$query = new WP_Query(
 		array(
 			'post_type'           => 'slide',

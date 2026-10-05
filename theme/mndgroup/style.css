@@ -1,8 +1,9 @@
 /*
 Theme Name: MND Group
-Theme URI: https://www.mndgroup.eu/
-Author: elvisek.cz
-Description: Šablona rozcestníku skupiny MND. Nástupce šablony „DP Enigmatic for MND Group“ se stejným vzhledem – bez jQuery a externích knihoven, responzivní, přístupná a s fonty hostovanými lokálně.
+Theme URI: https://www.mndgroup.eu
+Author: Zdeněk Král (ElvisEK)
+Author URI: https://www.elvisek.cz
+Description: Vlastní šablona rozcestníku skupiny MND — vzhled původní šablony, bez jQuery a bez externích služeb, responzivní a přístupná.
 Version: 2.1.0
 Requires at least: 6.5
 Tested up to: 7.1
@@ -11,7 +12,6 @@ License: GNU General Public License v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: mndgroup
 Update URI: https://github.com/elvisek2020/wp-theme_mndgroup
-Domain Path: /languages
-
-Styly šablony jsou v assets/css/theme.css (tento soubor slouží jen jako hlavička šablony).
 */
+
+/* Styly jsou v assets/css/main.css. */

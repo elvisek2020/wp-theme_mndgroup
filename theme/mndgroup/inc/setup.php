@@ -10,8 +10,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Nastavení šablony po jejím načtení.
  */
-function mndgroup_setup() {
-	load_theme_textdomain( 'mndgroup', MNDGROUP_DIR . '/languages' );
+function mnd_setup() {
+	load_theme_textdomain( 'mndgroup', MND_DIR . '/languages' );
 
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'post-thumbnails' );
@@ -30,10 +30,9 @@ function mndgroup_setup() {
 		)
 	);
 
-	// Editor (klasický i blokový) používá stejné písmo, proměnné a barvy jako web.
-	// Paleta a velikosti písma pro blokový editor jsou v theme.json.
+	// Editor (klasický i blokový) vypadá jako web; paleta, písmo a velikosti jsou v theme.json.
 	add_theme_support( 'editor-styles' );
-	add_editor_style( array( 'assets/css/fonts.css', 'assets/css/tokens.css', 'assets/css/editor.css' ) );
+	add_editor_style( 'assets/css/editor.css' );
 
 	// Umístění menu ponechává původní identifikátor, aby se přiřazení po přepnutí šablony zachovalo.
 	register_nav_menus(
@@ -42,20 +41,20 @@ function mndgroup_setup() {
 		)
 	);
 }
-add_action( 'after_setup_theme', 'mndgroup_setup' );
+add_action( 'after_setup_theme', 'mnd_setup' );
 
 /**
  * Šířka obsahu pro vložená média.
  */
-function mndgroup_content_width() {
+function mnd_content_width() {
 	$GLOBALS['content_width'] = 1170;
 }
-add_action( 'after_setup_theme', 'mndgroup_content_width', 0 );
+add_action( 'after_setup_theme', 'mnd_content_width', 0 );
 
 /**
  * Oblast widgetů v patičce (stejné ID jako v původní šabloně – widget s adresou zůstane).
  */
-function mndgroup_widgets_init() {
+function mnd_widgets_init() {
 	register_sidebar(
 		array(
 			'name'          => __( 'Footer – contact', 'mndgroup' ),
@@ -68,7 +67,7 @@ function mndgroup_widgets_init() {
 		)
 	);
 }
-add_action( 'widgets_init', 'mndgroup_widgets_init' );
+add_action( 'widgets_init', 'mnd_widgets_init' );
 
 /**
  * Úklid widgetů po přepnutí šablony.
@@ -77,7 +76,7 @@ add_action( 'widgets_init', 'mndgroup_widgets_init' );
  * (Hledat, Archivy, Rubriky…). WordPress je při přepnutí přesune do patičky –
  * tady je vrátíme mezi neaktivní widgety, v patičce zůstane jen adresa.
  */
-function mndgroup_cleanup_footer_widgets() {
+function mnd_cleanup_footer_widgets() {
 	$sidebars = wp_get_sidebars_widgets();
 	if ( empty( $sidebars['sidebar-footer'] ) ) {
 		return;
@@ -99,4 +98,4 @@ function mndgroup_cleanup_footer_widgets() {
 	}
 }
 // Priorita 20 = až po mapování widgetů, které při přepnutí šablony dělá WordPress.
-add_action( 'after_switch_theme', 'mndgroup_cleanup_footer_widgets', 20 );
+add_action( 'after_switch_theme', 'mnd_cleanup_footer_widgets', 20 );

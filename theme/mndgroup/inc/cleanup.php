@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Emoji skript a styly – moderní prohlížeče emoji zobrazí samy.
  */
-function mndgroup_disable_emoji() {
+function mnd_disable_emoji() {
 	remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
 	remove_action( 'wp_print_styles', 'print_emoji_styles' );
 	remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
@@ -20,7 +20,7 @@ function mndgroup_disable_emoji() {
 	remove_filter( 'wp_mail', 'wp_staticize_emoji_for_email' );
 	add_filter( 'emoji_svg_url', '__return_false' );
 }
-add_action( 'init', 'mndgroup_disable_emoji' );
+add_action( 'init', 'mnd_disable_emoji' );
 
 // Odkazy v hlavičce, které web nepotřebuje (Windows Live Writer, RSD, verze WP, krátký odkaz).
 remove_action( 'wp_head', 'wlwmanifest_link' );

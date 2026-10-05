@@ -13,33 +13,31 @@ defined( 'ABSPATH' ) || exit;
  * @param string $path Cesta relativní ke složce šablony.
  * @return string
  */
-function mndgroup_asset_version( $path ) {
-	$file = MNDGROUP_DIR . '/' . $path;
-	return file_exists( $file ) ? (string) filemtime( $file ) : MNDGROUP_VERSION;
+function mnd_asset_version( $path ) {
+	$file = MND_DIR . '/' . $path;
+	return file_exists( $file ) ? (string) filemtime( $file ) : MND_VERSION;
 }
 
 /**
  * Načtení stylů a skriptů na webu.
  */
-function mndgroup_enqueue_assets() {
-	wp_enqueue_style( 'mndgroup-fonts', MNDGROUP_URI . '/assets/css/fonts.css', array(), mndgroup_asset_version( 'assets/css/fonts.css' ) );
-	wp_enqueue_style( 'mndgroup-tokens', MNDGROUP_URI . '/assets/css/tokens.css', array(), mndgroup_asset_version( 'assets/css/tokens.css' ) );
-	wp_enqueue_style( 'mndgroup', MNDGROUP_URI . '/assets/css/theme.css', array( 'mndgroup-fonts', 'mndgroup-tokens' ), mndgroup_asset_version( 'assets/css/theme.css' ) );
-	wp_enqueue_style( 'mndgroup-print', MNDGROUP_URI . '/assets/css/print.css', array( 'mndgroup' ), mndgroup_asset_version( 'assets/css/print.css' ), 'print' );
+function mnd_enqueue_assets() {
+	wp_enqueue_style( 'mnd-main', MND_URI . '/assets/css/main.css', array(), mnd_asset_version( 'assets/css/main.css' ) );
+	wp_enqueue_style( 'mnd-print', MND_URI . '/assets/css/print.css', array( 'mnd-main' ), mnd_asset_version( 'assets/css/print.css' ), 'print' );
 
 	wp_enqueue_script(
-		'mndgroup',
-		MNDGROUP_URI . '/assets/js/theme.js',
+		'mnd-theme',
+		MND_URI . '/assets/js/theme.js',
 		array(),
-		mndgroup_asset_version( 'assets/js/theme.js' ),
+		mnd_asset_version( 'assets/js/theme.js' ),
 		array(
 			'in_footer' => true,
 			'strategy'  => 'defer',
 		)
 	);
 	wp_localize_script(
-		'mndgroup',
-		'mndgroupL10n',
+		'mnd-theme',
+		'mndL10n',
 		array(
 			/* translators: %s: slide number. */
 			'goTo'  => __( 'Show slide %s', 'mndgroup' ),
@@ -47,39 +45,45 @@ function mndgroup_enqueue_assets() {
 			'play'  => __( 'Play slideshow', 'mndgroup' ),
 		)
 	);
+
+	// Nepotřebné pro návštěvníky.
+	wp_dequeue_style( 'classic-theme-styles' );
+	if ( ! is_user_logged_in() ) {
+		wp_dequeue_style( 'dashicons' );
+	}
 }
-add_action( 'wp_enqueue_scripts', 'mndgroup_enqueue_assets' );
+add_action( 'wp_enqueue_scripts', 'mnd_enqueue_assets', 20 );
 
 /**
- * Přednačtení písem – text se vykreslí hned správným fontem.
+ * Přednačtení písem (@font-face generuje WordPress z theme.json) – text se vykreslí hned správným fontem.
  */
-function mndgroup_preload_fonts() {
-	foreach ( array( 'montserrat-latin.woff2', 'montserrat-latin-ext.woff2' ) as $font ) {
+function mnd_preload_fonts() {
+	foreach ( array( 'montserrat-latin-wght-normal', 'montserrat-latin-ext-wght-normal' ) as $font ) {
 		printf(
 			'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
-			esc_url( MNDGROUP_URI . '/assets/fonts/' . $font )
+			esc_url( MND_URI . '/assets/fonts/' . $font . '.woff2' )
 		);
 	}
 }
-add_action( 'wp_head', 'mndgroup_preload_fonts', 1 );
+add_action( 'wp_head', 'mnd_preload_fonts', 1 );
 
 /**
  * Barva lišty prohlížeče na mobilu a záložní favicon (pokud není nastavena ikona webu).
  */
-function mndgroup_head_meta() {
+function mnd_head_meta() {
 	echo '<meta name="theme-color" content="#ffffff">' . "\n";
 	if ( ! has_site_icon() ) {
-		printf( '<link rel="icon" href="%s" sizes="any">' . "\n", esc_url( MNDGROUP_URI . '/favicon.ico' ) );
+		printf( '<link rel="icon" href="%s" sizes="any">' . "\n", esc_url( MND_URI . '/favicon.ico' ) );
 	}
 }
-add_action( 'wp_head', 'mndgroup_head_meta', 2 );
+add_action( 'wp_head', 'mnd_head_meta', 2 );
 
 /**
  * Google Analytics 4 – jen pokud je v Přizpůsobení vyplněno ID měření.
  * Náhrada pluginu MonsterInsights (vypisoval totéž, jen s mnohem větší režií).
  */
-function mndgroup_google_analytics() {
-	$id = get_theme_mod( 'mndgroup_ga_id', '' );
+function mnd_google_analytics() {
+	$id = get_theme_mod( 'mnd_ga_id', '' );
 	if ( ! $id || ! preg_match( '/^G-[A-Z0-9]+$/', $id ) || is_user_logged_in() ) {
 		return;
 	}
@@ -93,4 +97,4 @@ function mndgroup_google_analytics() {
 	</script>
 	<?php
 }
-add_action( 'wp_head', 'mndgroup_google_analytics', 20 );
+add_action( 'wp_head', 'mnd_google_analytics', 20 );

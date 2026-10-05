@@ -1,18 +1,19 @@
-# Lokální vývoj: soubory webu, databáze a přihlášení lokálního správce
+# zálohy, přístupy a lokální prostředí neverzujeme
+backup-*/
+mndgroup.txt
 dev/wp/
 dev/db/
 dev/.local-admin
-dev/.env*
-
-# Testy
 dev/tests/node_modules/
 dev/tests/out/
-
-# Zálohy, dumpy a balíčky do veřejného repozitáře nepatří
-backup/
+_to_delete/
+.DS_Store
+*.log
 *.sql
 *.sql.gz
 *.zip
-
-# Systém
-.DS_Store
+# interní dokumenty (revize, wishlist, bezpečnostní nálezy) – do veřejného repa nepatří
+# (pozor: komentář v .gitignore musí být na samostatném řádku, za vzorem nefunguje)
+_docs/
+docs/
+mu-plugins/
