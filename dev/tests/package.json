@@ -1,0 +1,12 @@
+{
+  "name": "mndgroup-tests",
+  "private": true,
+  "type": "module",
+  "description": "Kontrola stránek lokální kopie webu (Playwright + nainstalovaný Chromium/Chrome).",
+  "scripts": {
+    "test": "node check.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

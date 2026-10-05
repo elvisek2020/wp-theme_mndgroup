@@ -1,6 +1,6 @@
-# Vydání nové verze: zvyšte Version ve style.css, commitněte a pushněte tag vX.Y.Z.
-# Workflow šablonu zkontroluje, zabalí (mndgroup.zip se složkou mndgroup/) a vytvoří
-# vydání se souborem update.json, ze kterého si weby se šablonou berou aktualizace.
+# Vydání: zvýšit verzi v theme/mndgroup/style.css i plugins/mndgroup-core/mndgroup-core.php,
+# commit, pak tag vX.Y.Z. Workflow zkontroluje kód, sestaví mndgroup.zip a mndgroup-core.zip
+# a vytvoří vydání se souborem update.json, ze kterého si weby berou aktualizace.
 name: Release
 
 on:
@@ -16,39 +16,41 @@ jobs:
 
   release:
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
-      - name: Verze v tagu odpovídá style.css
+      - name: Tag = verze šablony i pluginu
         run: |
-          theme_version=$(sed -n 's/^Version:[[:space:]]*//p' style.css | tr -d '\r')
-          if [ "${GITHUB_REF_NAME#v}" != "$theme_version" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME nesouhlasí s verzí ve style.css ($theme_version)"
-            exit 1
-          fi
-          echo "VERSION=$theme_version" >> "$GITHUB_ENV"
-          echo "REQUIRES=$(sed -n 's/^Requires at least:[[:space:]]*//p' style.css | tr -d '\r')" >> "$GITHUB_ENV"
-          echo "REQUIRES_PHP=$(sed -n 's/^Requires PHP:[[:space:]]*//p' style.css | tr -d '\r')" >> "$GITHUB_ENV"
+          tag="${GITHUB_REF_NAME#v}"
+          theme=$(grep -m1 -E '^Version:' theme/mndgroup/style.css | awk '{print $2}' | tr -d '\r')
+          core=$(grep -m1 -E '^ \* Version:' plugins/mndgroup-core/mndgroup-core.php | awk '{print $3}' | tr -d '\r')
+          [ "$tag" = "$theme" ] && [ "$tag" = "$core" ] || { echo "::error::Tag v$tag ≠ šablona $theme / plugin $core"; exit 1; }
+          echo "VERSION=$tag" >> "$GITHUB_ENV"
+          echo "REQUIRES=$(sed -n 's/^Requires at least:[[:space:]]*//p' theme/mndgroup/style.css | tr -d '\r')" >> "$GITHUB_ENV"
+          echo "REQUIRES_PHP=$(sed -n 's/^Requires PHP:[[:space:]]*//p' theme/mndgroup/style.css | tr -d '\r')" >> "$GITHUB_ENV"
 
-      - name: Balíček šablony
+      - name: Balíčky
         run: |
-          git archive --format=zip --prefix=mndgroup/ -o mndgroup.zip HEAD
+          (cd theme && zip -rq ../mndgroup.zip mndgroup -x '*/.DS_Store')
+          (cd plugins && zip -rq ../mndgroup-core.zip mndgroup-core -x '*/.DS_Store')
           unzip -l mndgroup.zip | grep -q ' mndgroup/style.css$'
+          unzip -l mndgroup-core.zip | grep -q ' mndgroup-core/mndgroup-core.php$'
 
       - name: update.json
         run: |
           base="https://github.com/${GITHUB_REPOSITORY}/releases"
           jq -n \
             --arg version "$VERSION" \
-            --arg package "$base/download/v$VERSION/mndgroup.zip" \
             --arg url "$base/tag/v$VERSION" \
             --arg requires "$REQUIRES" \
             --arg requires_php "$REQUIRES_PHP" \
-            '{version: $version, package: $package, url: $url, requires: $requires, requires_php: $requires_php}' > update.json
+            --arg theme "$base/download/v$VERSION/mndgroup.zip" \
+            --arg plugin "$base/download/v$VERSION/mndgroup-core.zip" \
+            '{version: $version, url: $url, requires: $requires, requires_php: $requires_php, package: $theme, plugin: {slug: "mndgroup-core", package: $plugin}}' > update.json
           cat update.json
 
       - name: Vydání na GitHubu
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" mndgroup.zip update.json --title "MND Group $VERSION" --generate-notes --latest
+        run: gh release create "$GITHUB_REF_NAME" mndgroup.zip mndgroup-core.zip update.json --title "MND Group $VERSION" --generate-notes --latest

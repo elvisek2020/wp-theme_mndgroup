@@ -1,0 +1,76 @@
+/*
+ * MND Group – tisk. Načítá se s media="print".
+ */
+
+.mnd-hero,
+.mnd-segments,
+.mnd-lang,
+.mnd-skip-link,
+.mnd-footer__kkcg,
+.mnd-footer__map,
+.mnd-entry__edit,
+#wpadminbar {
+	display: none !important;
+}
+
+html {
+	margin-top: 0 !important;
+}
+
+body {
+	background: #fff;
+	color: #000;
+	font-size: 11pt;
+	line-height: 1.5;
+}
+
+.mnd-header__inner {
+	height: auto;
+	padding: 0 0 1rem;
+}
+
+.mnd-main--home .mnd-entry,
+.mnd-main:not(.mnd-main--home) {
+	padding: 0;
+}
+
+.mnd-main--home .mnd-entry__content {
+	text-align: left;
+}
+
+/* Adresa odkazu za textem – na papíře se nedá kliknout. */
+.mnd-entry__content a[href^="http"]::after {
+	content: " (" attr(href) ")";
+	font-size: .85em;
+	word-break: break-all;
+}
+
+pre,
+code {
+	background: #f4f4f4;
+	color: #000;
+	white-space: pre-wrap;
+}
+
+.mnd-footer {
+	padding: 1rem 0 0;
+	border-top: 1px solid #999;
+}
+
+.mnd-footer__grid {
+	display: block;
+}
+
+.mnd-footer__contact .widget {
+	padding: 0;
+	border: 0;
+}
+
+.mnd-footer .widget li::before {
+	display: none;
+}
+
+.mnd-footer__info {
+	border-top: 0;
+	text-align: left;
+}

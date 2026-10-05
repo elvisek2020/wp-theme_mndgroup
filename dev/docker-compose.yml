@@ -1,0 +1,47 @@
+# Lokální kopie www.mndgroup.eu pro vývoj šablony a pluginu.
+# Poprvé: ./setup.sh <záloha souborů> <dump.sql>   →   http://localhost:8321
+# Šablona i plugin se připojují přímo z repozitáře – změny se projeví hned.
+name: mndgroup-local
+
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: mndgroup
+      MARIADB_USER: mndgroup
+      MARIADB_PASSWORD: mndgroup
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+
+  wp:
+    image: wordpress:php8.3-apache
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8321:80"
+    volumes:
+      - ./wp:/var/www/html
+      - ../theme/mndgroup:/var/www/html/wp-content/themes/mndgroup
+      - ../plugins/mndgroup-core:/var/www/html/wp-content/plugins/mndgroup-core
+
+  cli:
+    image: wordpress:cli-php8.3
+    profiles: ["cli"]
+    user: "33:33"
+    environment:
+      HOME: /tmp
+    depends_on:
+      - db
+    volumes:
+      - ./wp:/var/www/html
+      - ../theme/mndgroup:/var/www/html/wp-content/themes/mndgroup
+      - ../plugins/mndgroup-core:/var/www/html/wp-content/plugins/mndgroup-core
+
+volumes:
+  db:

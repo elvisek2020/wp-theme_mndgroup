@@ -1,0 +1,29 @@
+/*
+ * MND Group – proměnné (barvy, písmo, rozměry).
+ * Sdílí je web (theme.css), editor (editor.css) i theme.json – paleta v editoru odkazuje sem.
+ */
+
+:root {
+	--mnd-green: #8bb700;
+	--mnd-green-text: #4f6b00;   /* zelená pro text na světlém pozadí (kontrast 5 : 1) */
+	--mnd-tile: #525455;         /* dlaždice – o odstín tmavší než původní #585a5b kvůli kontrastu zeleného textu */
+	--mnd-tile-hover: #3b3c3d;
+	--mnd-bg: #e7e9ea;
+	--mnd-text: #404040;
+	--mnd-muted: #56595b;
+	--mnd-icon: #c6c6c5;
+	--mnd-white: #fff;
+
+	--mnd-font: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+	--mnd-container: 1170px;
+	--mnd-gutter: clamp(1rem, 3.5vw, 2rem);
+	--mnd-header-h: 96px;
+	--mnd-focus: var(--mnd-green-text);
+	--mnd-ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+@media (min-width: 48em) {
+	:root {
+		--mnd-header-h: 120px;
+	}
+}

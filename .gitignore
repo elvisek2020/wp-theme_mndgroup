@@ -1,3 +1,18 @@
-.DS_Store
+# Lokální vývoj: soubory webu, databáze a přihlášení lokálního správce
+dev/wp/
+dev/db/
+dev/.local-admin
+dev/.env*
+
+# Testy
+dev/tests/node_modules/
+dev/tests/out/
+
+# Zálohy, dumpy a balíčky do veřejného repozitáře nepatří
+backup/
+*.sql
+*.sql.gz
 *.zip
-node_modules/
+
+# Systém
+.DS_Store

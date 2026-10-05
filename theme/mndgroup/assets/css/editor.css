@@ -1,0 +1,31 @@
+/* Vzhled obsahu v editoru (klasický TinyMCE i blokový editor) odpovídá webu.
+   Proměnné jsou v tokens.css, který se do editoru načítá spolu s tímto souborem. */
+body,
+.editor-styles-wrapper {
+	color: var(--mnd-text);
+	font-family: var(--mnd-font);
+	font-size: 16px;
+	line-height: 1.8;
+}
+
+body {
+	max-width: var(--mnd-container);
+	margin: 1rem auto;
+	padding: 0 1rem;
+	background: var(--mnd-bg);
+}
+
+h1, h2, h3, h4, h5, h6 {
+	color: var(--mnd-tile-hover);
+	line-height: 1.25;
+}
+
+a {
+	color: var(--mnd-green-text);
+}
+
+blockquote {
+	margin: 1.5em 0;
+	padding-left: 1.25em;
+	border-left: 4px solid var(--mnd-green);
+}

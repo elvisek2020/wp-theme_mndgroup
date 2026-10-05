@@ -1,0 +1,60 @@
+{
+	"$schema": "https://schemas.wp.org/wp/6.5/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": false,
+		"color": {
+			"custom": false,
+			"customDuotone": false,
+			"customGradient": false,
+			"defaultDuotone": false,
+			"defaultGradients": false,
+			"defaultPalette": false,
+			"duotone": [],
+			"gradients": [],
+			"palette": [
+				{ "slug": "mnd-green", "name": "Zelená MND", "color": "var(--mnd-green)" },
+				{ "slug": "mnd-green-text", "name": "Zelená pro text", "color": "var(--mnd-green-text)" },
+				{ "slug": "mnd-dark", "name": "Tmavě šedá", "color": "var(--mnd-tile-hover)" },
+				{ "slug": "mnd-grey", "name": "Šedá", "color": "var(--mnd-muted)" },
+				{ "slug": "mnd-light", "name": "Světle šedá", "color": "var(--mnd-bg)" },
+				{ "slug": "white", "name": "Bílá", "color": "var(--mnd-white)" }
+			]
+		},
+		"layout": {
+			"contentSize": "1170px",
+			"wideSize": "1170px"
+		},
+		"spacing": {
+			"customSpacingSize": false,
+			"padding": false,
+			"margin": false,
+			"units": [ "px", "rem", "%" ]
+		},
+		"typography": {
+			"customFontSize": false,
+			"dropCap": false,
+			"fontStyle": false,
+			"fontWeight": false,
+			"letterSpacing": false,
+			"textDecoration": false,
+			"textTransform": false,
+			"lineHeight": false,
+			"defaultFontSizes": false,
+			"fontFamilies": [
+				{ "slug": "montserrat", "name": "Montserrat", "fontFamily": "var(--mnd-font)" }
+			],
+			"fontSizes": [
+				{ "slug": "small", "name": "Malé", "size": "0.875rem" },
+				{ "slug": "normal", "name": "Normální", "size": "1rem" },
+				{ "slug": "large", "name": "Velké", "size": "1.25rem" },
+				{ "slug": "x-large", "name": "Nadpis", "size": "1.75rem" }
+			]
+		},
+		"blocks": {
+			"core/button": {
+				"border": { "radius": false }
+			}
+		}
+	}
+}

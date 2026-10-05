@@ -1,0 +1,171 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MND Group 2.1.0\n"
+"Language: cs_CZ\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : ((n>=2 && n<=4) ? 1 : 2);\n"
+"X-Domain: mndgroup\n"
+
+msgid "%1$s of %2$s"
+msgstr "%1$s z %2$s"
+
+msgid "Activate it in Plugins"
+msgstr "Aktivovat v Pluginech"
+
+msgid "Add new slide"
+msgstr "Přidat nový slide"
+
+msgid "Add slide"
+msgstr "Přidat slide"
+
+msgid "Address shown next to the map in the footer. With Polylang, add one widget per language."
+msgstr "Adresa vedle mapy v patičce. S Polylangem přidejte jeden widget pro každý jazyk."
+
+msgid "All banners below each other"
+msgstr "Všechny bannery pod sebou"
+
+msgid "All slides"
+msgstr "Všechny slidy"
+
+msgid "Back to the homepage"
+msgstr "Zpět na úvodní stránku"
+
+msgid "Banners are managed under Slides."
+msgstr "Bannery se spravují v sekci Slidy."
+
+msgid "Banners at the top of the homepage. The order is set by the “Order” field."
+msgstr "Bannery v horní části úvodní stránky. Pořadí určuje pole „Pořadí“."
+
+msgid "Business areas"
+msgstr "Oblasti podnikání"
+
+msgid "Business areas (tiles)"
+msgstr "Oblasti podnikání (dlaždice)"
+
+msgid "Copyright &copy; %s MND"
+msgstr "Copyright &copy; %s MND"
+
+msgid "Download mndgroup-core.zip"
+msgstr "Stáhnout mndgroup-core.zip"
+
+msgid "Edit slide"
+msgstr "Upravit slide"
+
+msgid "Edit<span class=\"screen-reader-text\"> “%s”</span>"
+msgstr "Upravit<span class=\"screen-reader-text\"> „%s“</span>"
+
+msgid "Footer – contact"
+msgstr "Patička – kontakt"
+
+msgid "For example G-XXXXXXXXXX. Leave empty if analytics is handled by a plugin, otherwise visits are counted twice."
+msgstr "Například G-XXXXXXXXXX. Nechte prázdné, pokud měření zajišťuje plugin – jinak by se návštěvy počítaly dvakrát."
+
+msgid "Google Analytics 4 – measurement ID"
+msgstr "Google Analytics 4 – ID měření"
+
+msgid "Homepage banners"
+msgstr "Bannery na úvodní stránce"
+
+msgid "Image"
+msgstr "Obrázek"
+
+msgid "Language"
+msgstr "Jazyk"
+
+msgid "MND Group"
+msgstr "MND Group"
+
+msgid "MND Group companies"
+msgstr "Společnosti skupiny MND"
+
+msgid "MND Group:"
+msgstr "MND Group:"
+
+msgid "Map of Europe with the countries where MND Group AG operates"
+msgstr "Mapa Evropy se zeměmi, kde působí MND Group AG"
+
+msgid "New slide"
+msgstr "Nový slide"
+
+msgid "Next slide"
+msgstr "Další banner"
+
+msgid "No slides found in Trash."
+msgstr "V koši nejsou žádné slidy."
+
+msgid "No slides found."
+msgstr "Žádné slidy nenalezeny."
+
+msgid "Nothing found."
+msgstr "Nic nenalezeno."
+
+msgid "Order"
+msgstr "Pořadí"
+
+msgid "Page not found"
+msgstr "Stránka nenalezena"
+
+msgid "Pause slideshow"
+msgstr "Pozastavit střídání bannerů"
+
+msgid "Play slideshow"
+msgstr "Spustit střídání bannerů"
+
+msgid "Previous slide"
+msgstr "Předchozí banner"
+
+msgid "Search results for “%s”"
+msgstr "Výsledky hledání „%s“"
+
+msgid "Search slides"
+msgstr "Hledat slidy"
+
+msgid "Set slide image"
+msgstr "Nastavit obrázek slidu"
+
+msgid "Show companies: %s"
+msgstr "Zobrazit společnosti: %s"
+
+msgid "Show slide %s"
+msgstr "Zobrazit banner %s"
+
+msgid "Show the KKCG logo in the footer (large screens)"
+msgstr "Zobrazit logo KKCG v patičce (velké obrazovky)"
+
+msgid "Skip to content"
+msgstr "Přejít k obsahu"
+
+msgid "Slide"
+msgstr "Slide"
+
+msgid "Slide image (1920 × 484 px)"
+msgstr "Obrázek slidu (1920 × 484 px)"
+
+msgid "Slides"
+msgstr "Slidy"
+
+msgid "Slideshow (one banner at a time)"
+msgstr "Prezentace (bannery se střídají)"
+
+msgid "Slideshow interval (seconds)"
+msgstr "Interval střídání (sekundy)"
+
+msgid "The page you are looking for does not exist or has been moved."
+msgstr "Hledaná stránka neexistuje nebo byla přesunuta."
+
+msgid "View slide"
+msgstr "Zobrazit slide"
+
+msgid "carousel"
+msgstr "prezentace"
+
+msgid "slide"
+msgstr "banner"
+
+msgid "the companion plugin “MND Group – core” is installed but not active. It provides login protection, security hardening and site maintenance."
+msgstr "doprovodný plugin „MND Group – jádro webu“ je nainstalovaný, ale není aktivní. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu."
+
+msgid "the companion plugin “MND Group – core” is missing. It provides login protection, security hardening and site maintenance."
+msgstr "chybí doprovodný plugin „MND Group – jádro webu“. Zajišťuje ochranu přihlášení, zabezpečení a údržbu webu."
