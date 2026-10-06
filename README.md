@@ -120,7 +120,7 @@ tools/img.py                          # obrazky/vstup → obrazky/web (WebP 1920
 tools/img.py --size 1600x900          # jiný formát
 ```
 
-Zálohy (`backup-*/`), přístupy (`mndgroup.txt`, `ctime.txt`) a interní dokumenty (`docs/`) jsou v `.gitignore`.
+Zálohy, přístupové údaje a interní dokumenty se neverzují.
 
 ## Vydání nové verze
 

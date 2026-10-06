@@ -1,6 +1,8 @@
 # Changelog
 
 ## Nevydáno
+### Vydání
+- `.gitignore` už není součástí repozitáře, platí jen lokálně
 
 ## 2.4.0 — 2026-10-05
 ### Šablona
